@@ -2,3 +2,8 @@
 The project is based on a MATLAB module ([upr](https://www.sintef.no/projectweb/mrst/modules/upr/)) and a mesh generator ([Gmsh](https://gmsh.info)).
 
 Code in this directory will firstly be about getting to know the generator (primarily through its Python API) and the MATLAB module. The goal of the project is to join the two, using Gmsh as backend for UPR.
+
+## Packages and versions
+This project is running on Python `3.10.2`
+
+All packages can be found in `requirements.txt` and, as usual, installed by running `pip install -r requirements.txt`
