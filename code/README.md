@@ -7,3 +7,5 @@ Code in this directory will firstly be about getting to know the generator (prim
 This project is running on Python `3.10.2`
 
 All packages can be found in `requirements.txt` and, as usual, installed by running `pip install -r requirements.txt`
+
+Note that in order to run Gmsh, you need to install the Gmsh backend as well. I did this (on Arch Linux) by running `yay -S gmsh`, but depends entirely on your OS. Information on how to install Gmsh can be found at https://gmsh.info
