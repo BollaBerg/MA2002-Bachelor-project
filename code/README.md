@@ -16,4 +16,4 @@ Note that in order to run Gmsh, you need to install the Gmsh backend as well. I 
 ### MATLAB
 This project runs on MATLAB `R2021b`
 
-To run MATLAB files in this project, first install (MRST)[https://www.sintef.no/projectweb/mrst/]
+To run MATLAB files in this project, first install [MRST](https://www.sintef.no/projectweb/mrst/)
