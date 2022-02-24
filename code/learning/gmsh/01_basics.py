@@ -144,7 +144,7 @@ gmsh.model.mesh.generate(dimension)
 # in the UNV format.
 # We can also save the mesh in older versions of the MSH format, by setting
 # `gmsh.option.set_number("Mesh.MshFileVersion", x)` for a version number x
-gmsh.write("learning/gmsh/gmsh1.msh")
+gmsh.write("learning/gmsh/01_basics.msh")
 
 
 # ... or we can visualize the model in the graphical user interface
