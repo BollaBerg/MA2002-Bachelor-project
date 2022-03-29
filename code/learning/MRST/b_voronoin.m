@@ -12,7 +12,7 @@ keep(2:10, 2:10, 1:11) = true;
 sites = [X(:)+0.4*Y(:).^2 Y(:)+0.1*X(:).^2 Z(:)];
 
 % Use voronoin to create voronoi grid of sites
-[V, C] = voronoin(sites);
+[V, C] = voronoin(sites);   % V = Vertices, C = map from each cell to its vertices
 % Keep only non-boundary cells
 C = C(keep(:));
 % Create a 3D MRST grid
