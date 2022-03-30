@@ -9,6 +9,7 @@ boundary = [
     0.5, 1.2;
     0, 1;
 ];
+% NOTE: All sites must be within boundary
 
 % Create random sites
 sites = rand(30, 2);
