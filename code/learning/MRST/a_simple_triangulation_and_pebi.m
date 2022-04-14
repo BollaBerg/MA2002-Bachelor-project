@@ -1,3 +1,5 @@
+% EXAMPLE 1 (PAGE 9) OF Berge, Klemetsdal et.al.
+
 n = 5;
 [X, Y] = meshgrid(linspace(0, 1, n));
 
