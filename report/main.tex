@@ -12,7 +12,11 @@
 \import{./}{title}
 
 % Defining front matter settings (Norsk: innstillinger for forord m.m.)
-\frontmatter
+\frontmatter \ownfrontmatter
+
+% Include abstract
+\import{./Sections}{0_Abstract}
+\import{./Sections}{1_Preface}
 
 % Inserting table of contents
 \tableofcontents
@@ -21,13 +25,20 @@
 \listoffigures
 \listoftables
 
+\pagebreak
+
+
 % Defining main matter settings (Norsk: innstillinger for hoveddelen av teksten)
-\mainmatter
+\mainmatter \ownmainmatter
 
-% Introduction explaining this LaTeX-template
-\import{./Sections/}{Introduction}
-
-% Example section added from an external tex-file, here located in ./Sections/
+% Start main content
+\import{./Sections/}{10_Introduction}   % 2-3 sider?
+\import{./Sections/}{11_Theory}         % 5-6 sider?
+\import{./Sections/}{20_Method}         % 3 sider?
+\import{./Sections/}{30_Results}        % 4 sider?
+\import{./Sections/}{40_Discussion}     % 3 sider?
+\import{./Sections/}{50_Summary}        % 2 sider?
+% Er dette egentlig en optimal struktur for dette prosjektet? Er hentet fra ulike guider på hvordan skrive bachelor, blant annet NTNU sin, men jeg har jo ikke gjort noe forskning selv, og har derfor veldig begrenset med metode. Bør kanskje ha mer fokus på hva jeg har prøvd og fått til, samt hvordan jeg gjorde det, og mindre på metode og resultat?
 
 
 % Printing bibliography

@@ -1,0 +1,22 @@
+\section{Theory}
+% Noe om teorien bak dette - hva er det matematiske og teoretiske som kreves for en god modellering?
+
+% Skriv en del om PEBI-grids or Voronoi
+One method to generate such models is by constructing PEBI grids. A PEBI grid is defined by a set of sites $S$ and cells $V$, where each cell is made up of all points closer to its corresponding site than any other site. Mathematically, we can say that each cell $v_{s_i} \in V$ is defined by
+\begin{equation}
+    v_{s_i} = \left\{ x : x \in \mathbb{R}^d,\quad \abs{x - s_i} < \abs{x - s},\quad \forall s \in S \setminus \{s_i\} \right\}.
+\end{equation}
+The face between two sites, denoted by $v_{s_i, s_j}$ is made up by all points that are the same distant from two sites but further from any other sites, i.e.
+\begin{equation}
+    v_{s_i, s_j} = \left\{ x : x \in \mathbb{R}^d,\quad \abs{x - s_i} = \abs{x - s_j} < \abs{x - s},\quad \forall s \in S \setminus \{i, j\} \right\}.
+\end{equation}
+
+% Legg til en illustrasjon av PEBI-grids her
+
+% Noe om Voronoi og Delaunay
+
+
+\subsection{The UPR module}
+
+
+\subsection{Gmsh}

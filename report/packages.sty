@@ -1,3 +1,20 @@
+% OWN STUFF
+% Remove section numbering in front matter
+% This is, honestly, simpler than trying to redefine \frontmatter and \mainmatter
+\newcommand{\ownfrontmatter}[0]{
+    \setcounter{secnumdepth}{0}
+}
+\newcommand{\ownmainmatter}[0]{
+    \setcounter{secnumdepth}{2}
+}
+
+% Absolute value stuff
+\usepackage{mathtools}
+\DeclarePairedDelimiter\abs{\lvert}{\rvert}
+\DeclarePairedDelimiter\norm{\lVert}{\rVert}
+
+% END OF OWN STUFf
+
 % Author - Jon Arnt Kårstad, NTNU IV-IMT
 
 \NeedsTeXFormat{LaTeX2e}
