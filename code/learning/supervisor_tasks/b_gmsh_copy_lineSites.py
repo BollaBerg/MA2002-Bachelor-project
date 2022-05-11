@@ -61,7 +61,7 @@ gmsh.model.mesh.generate(dimension)
 
 
 # Save to disk
-gmsh.write("b_gmsh_copy_lineSites.msh")
+gmsh.write("b_gmsh_copy_lineSites.m")
 
 
 # ... or we can visualize the model in the graphical user interface
