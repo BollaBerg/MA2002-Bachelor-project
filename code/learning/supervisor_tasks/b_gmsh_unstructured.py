@@ -4,6 +4,9 @@ Attempt to create a copy of the given assignment solved in a_lineSites2D.m
 The task is to create a square mesh, over [0, 1] x [0, 1], with a single line
 from [0.25, 0.25] to [0.75, 0.75], and then export the underlying mesh and
 import it into MRST/UPR.
+
+NOTE: The output of this file raises the following error (but works):
+    `Warning: No field 'faces.neighbors' found. Adding plausible values... proceed with caution!`
 """
 import gmsh
 
@@ -61,7 +64,7 @@ gmsh.model.mesh.generate(dimension)
 
 
 # Save to disk
-gmsh.write("b_gmsh_copy_lineSites.m")
+gmsh.write("b_gmsh_unstructured.m")
 
 
 # ... or we can visualize the model in the graphical user interface
