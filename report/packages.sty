@@ -1,11 +1,12 @@
 % OWN STUFF
+
 % Remove section numbering in front matter
 % This is, honestly, simpler than trying to redefine \frontmatter and \mainmatter
 \newcommand{\ownfrontmatter}[0]{
     \setcounter{secnumdepth}{0}
 }
 \newcommand{\ownmainmatter}[0]{
-    \setcounter{secnumdepth}{2}
+    \setcounter{secnumdepth}{3}
 }
 
 % Absolute value stuff
@@ -13,7 +14,8 @@
 \DeclarePairedDelimiter\abs{\lvert}{\rvert}
 \DeclarePairedDelimiter\norm{\lVert}{\rVert}
 
-% END OF OWN STUFf
+% (See more own stuff at end, for things needing below packages)
+% END OF OWN STUFF
 
 % Author - Jon Arnt Kårstad, NTNU IV-IMT
 
@@ -47,7 +49,7 @@
 
 % --- Bibliography & References---  
 \usepackage[backend = biber,    % Recommended backend for sorting bibliography
-            style = authoryear-comp,    % Close to the 'Harvard' referencing style
+            style = numeric-comp,    % Close to the 'Harvard' referencing style
             urldate = long,     % Long: 24th Mar. 1997 | Short: 24/03/1997
             maxcitenames = 2,   % Number of authors in cite before replaced with 'Author#1 et al.'
             ]{biblatex}
@@ -144,3 +146,12 @@
 \renewcommand{\headrulewidth}{0.1ex}
 \renewcommand{\footrulewidth}{0.1ex}
 \fancyfoot[C]{\thepage}
+
+
+% OWN STUFF REQUIRING ABOVE PACKAGES
+
+% Setup some theorem stuff
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\newtheorem{theorem}{Theorem}
