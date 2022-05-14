@@ -13,11 +13,40 @@ Arguments:
 Output:
     - Gmsh mesh saved to file `_pebi_grid_2D.m`
 """
+from array import array
 import sys
+from typing import Union
 
 import gmsh
 
-def pebi_grid_2D(cell_dimensions: list, size: list, lines: list):
+def pebi_grid_2D(cell_dimensions: float, size: list, lines: Union[list, dict[dict]]):
+    # Do some (massive) argument handling, for use in MATLAB
+    if isinstance(lines, dict):
+        if isinstance(list(lines.values())[0], array):
+            # If data is sent from MATLAB, then lines is a dict
+            # If there is only one line, then we accept it as a 1D dict, i.e.
+            # lines is a dict in the shape {x: array, y: array}
+            if "x" not in lines.keys() or "y" not in lines.keys():
+                raise ValueError(
+                    "If lines is a single-level dict, it must have keys x, y. "
+                    + f"Current keys: {lines.keys()}"
+                )
+            lines = list(zip(lines.get("x"), lines.get("y")))
+
+        elif isinstance(list(lines.values())[0], dict):
+            # If data is sent from MATLAB, then lines is a dict of dicts
+            # Each element in lines.values is a dict of {x: array, y: array}
+            new_lines = []
+            for line in lines.values():
+                if "x" not in line.keys() or "y" not in line.keys():
+                    raise ValueError(
+                        "If lines is a 2D dict, then its values must have the "
+                        + "keys x, y. "
+                        + f"Current keys: {lines.keys()}, current lines: {lines}"
+                    )
+                new_lines.append(list(zip(line.get("x"), line.get("y"))))
+            lines = new_lines
+
     gmsh.initialize()
     gmsh.model.add("pebiGrid2D")
 
@@ -69,7 +98,7 @@ def pebi_grid_2D(cell_dimensions: list, size: list, lines: list):
     gmsh.model.mesh.generate(2)
 
     # Save to disk
-    gmsh.write("_pebi_grid_2D.m")
+    gmsh.write("TEMPpebi_grid_2D.m")
 
     # Always finalize
     gmsh.finalize()
@@ -79,10 +108,8 @@ if __name__ == "__main__":
     try:
         cell_dimensions = sys.argv[1]
     except IndexError:
-        cell_dimensions = [0.1, 0.1]
+        cell_dimensions = 0.25
         print(f"No cell dimensions found. Default to {cell_dimensions}")
-    if len(cell_dimensions) < 2:
-        raise ValueError(f"Cell dimensions must have length >= 2. Current length: {len(cell_dimensions)}")
 
     try:
         size = sys.argv[2]
