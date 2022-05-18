@@ -19,7 +19,8 @@ from typing import Union
 
 import gmsh
 
-def pebi_grid_2D(cell_dimensions: float, size: list, lines: Union[list, dict[dict]]):
+def pebi_grid_2D(cell_dimensions: float, size: list,
+                lines: Union['list[list]', 'dict[str, list]', 'dict[str, dict[str, list]]']):
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(lines, dict):
         if isinstance(list(lines.values())[0], array):
