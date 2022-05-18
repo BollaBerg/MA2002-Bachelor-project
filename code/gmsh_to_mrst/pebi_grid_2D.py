@@ -99,7 +99,7 @@ def pebi_grid_2D(cell_dimensions: float, size: list,
     gmsh.model.mesh.generate(2)
 
     # Save to disk
-    gmsh.write("TEMPpebi_grid_2D.m")
+    gmsh.write("TEMP_Gmsh_MRST.m")
 
     # Always finalize
     gmsh.finalize()

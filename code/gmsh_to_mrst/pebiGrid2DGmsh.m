@@ -21,9 +21,9 @@ pyDims = py.list(pdims);
 py.pebi_grid_2D.pebi_grid_2D(resGridSize, pyDims, faceConstraints);
 G = 0;
 
-if isfile('TEMPpebi_grid_2D.m')
-    G = gmshToMRST('TEMPpebi_grid_2D.m');
-    delete TEMPpebi_grid_2D.m
+if isfile('TEMP_Gmsh_MRST.m')
+    G = gmshToMRST('TEMP_Gmsh_MRST.m');
+    delete TEMP_Gmsh_MRST.m
 end
 
 end
