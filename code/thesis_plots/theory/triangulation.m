@@ -15,20 +15,20 @@ connectivity = [
 ];
 
 triangle = triangulation(connectivity, P);
-delaunay_triangle = delaunay(P);
+delaunay_triangle = delaunayTriangulation(P);
 
 % Plot
 figure
 
-subplot(1, 2, 1); hold on
+hold on;
 triplot(triangle, 'k');
 plot(P(:, 1), P(:, 2), '.r', 'MarkerSize', 15);
 set(gca,'XColor', 'none','YColor','none');
+saveas(gcf, 'triangulation_random.png')
 
-subplot(1, 2, 2); hold on
-triplot(delaunay_triangle, P(:, 1), P(:, 2), 'k');
+clf;
+hold on;
+triplot(delaunay_triangle, 'k');
 plot(P(:, 1), P(:, 2), '.r', 'MarkerSize', 15);
 set(gca,'XColor', 'none','YColor','none');
-
-% Save
-saveas(gcf, 'triangulation.png')
+saveas(gcf, 'triangulation_delaunay.png')
