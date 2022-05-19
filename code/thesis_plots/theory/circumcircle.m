@@ -10,6 +10,7 @@ connectivity = [
     1 2 5;
     1 3 6;
     1 4 5;
+    1 4 6;
     2 4 5;
     3 4 6;
 ];
@@ -23,7 +24,7 @@ delaunay_triangle = delaunayTriangulation(P);
 % Plot
 figure
 
-subplot(1, 2, 1); hold on
+hold on
 set(gca,'XColor', 'none','YColor','none');
 triplot(triangle, 'Color', [0 0 0 1]);
 for c = 1:length(center_triangle)
@@ -32,8 +33,10 @@ end
 xlim([-0.5 1.5])
 ylim([-0.3 1.3])
 plot(P(:, 1), P(:, 2), '.r', 'MarkerSize', 15);
+saveas(gcf, 'circumcircle_random.png')
 
-subplot(1, 2, 2); hold on
+clf;
+hold on
 triplot(delaunay_triangle, 'Color', [0 0 0 1]);
 plot(P(:, 1), P(:, 2), '.r', 'MarkerSize', 15);
 for c = 1:length(center_delaunay)
@@ -42,9 +45,7 @@ end
 xlim([-0.5 1.5])
 ylim([-0.3 1.3])
 set(gca,'XColor', 'none','YColor','none');
-
-% Save
-saveas(gcf, 'circumcircle.png')
+saveas(gcf, 'circumcircle_delaunay.png')
 
 
 % Define a method for plotting circles
