@@ -22,10 +22,11 @@
 \tableofcontents
 
 % Inserting list of figures & list of tables
+\clearpage
 \listoffigures
-\listoftables
+% \listoftables
 
-\pagebreak
+\clearpage
 
 
 % Defining main matter settings (Norsk: innstillinger for hoveddelen av teksten)
@@ -36,12 +37,13 @@
 \import{./Sections/}{11_Theory}
 \import{./Sections/}{20_Software}
 \import{./Sections/}{30_Combining software}
+\import{./Sections/}{40_Further work}
 \import{./Sections/}{50_Summary}
 
 
 
 % Printing bibliography
-\newpage
+\clearpage
 \printbibliography[heading = bibintoc, title = Bibliography]    % 'bibintoc' inserts our bibliography into the table of contents
 
 % Inserting appendix with separate settings
