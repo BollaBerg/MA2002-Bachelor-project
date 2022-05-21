@@ -2,7 +2,7 @@
 % Create a simple 2D mesh using Gmsh, called from MATLAB
 
 % Setup required variables
-resGridSize = 0.25;
+resGridSize = 0.1;
 domain = [1, 1];
 faceConstraints.a.x = [0.25 0.4 0.75];
 faceConstraints.a.y = [0.25 0.5 0.75];
@@ -10,6 +10,8 @@ faceConstraints.b.x = [0.8 0.9];
 faceConstraints.b.y = [0.1 0.2];
 faceConstraints.theseCanHaveAnyNames.x = [0.2 0.9];
 faceConstraints.theseCanHaveAnyNames.y = [0.9 0.1];
+faceConstraints.alsoWorksWithSinglePoints.x = 0.1;
+faceConstraints.alsoWorksWithSinglePoints.y = 0.1;
 
 % pebiGrid2DGmsh returns a single variable, G
 G = pebiGrid2DGmsh(resGridSize, domain, faceConstraints);
