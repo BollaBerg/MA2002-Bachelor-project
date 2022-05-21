@@ -14,6 +14,7 @@ Output:
     - Gmsh mesh saved to file TEMP_Gmsh_MRST.m`
 """
 from array import array
+from itertools import combinations
 from typing import Any, Union, Iterable
 
 import gmsh
@@ -30,6 +31,7 @@ def pebi_grid_2D(
                     'dict[str, dict[str, float]]',
                     'dict[Any, dict[str, Iterable]]'] = None,
         face_constraint_factor: float = 1/3,
+        face_intersection_factor: float = None,
         min_threshold_distance: float = 0.05,
         max_threshold_distance: float = 0.2,
         fracture_mesh_sampling: int = 100,
@@ -93,12 +95,20 @@ def pebi_grid_2D(
                             2022: {"x": 0.9, "y": 0.1}
                         }
             NOTE: Any constraints must be wholly within the supplied domain,
-            i.e. completely within the rectangle between [0, 0] and `size`!
+            i.e. completely within the rectangle between [0, 0] and `size`!.
+            If None, face_constraints will be an empty list. Defaults to None.
         face_constraint_factor (float, optional): The size of the cells close
             to the face constraints, as compared to supplied cell_dimensions.
             Cells within min_threshold_distance will have size
             face_constraint_factor * cell_dimensions. Equivalent to FCFactor in
             MRST/UPR/pebiGrid2D. Defaults to 1/3.
+        face_intersection_factor (float, optional): The size of the cells close
+            to intersections between face constraints, as compared to supplied
+            cell_dimensions. Cells within min_threshold_distance from an 
+            intersection will have size face_intersection_factor * cell_dimensions.
+            If None, no extra cell shaping will occur around intersections.
+            The factor is also used in "breaks" of lines, i.e. if there is a
+            sharp "turn" in a line segment. Defaults to None.
         min_threshold_distance (float, optional): Distance from face constraints
             where cell dimensions will start increasing. Defaults to 0.05.
         max_threshold_distance (float, optional): Distance from face constraints
@@ -176,6 +186,8 @@ def pebi_grid_2D(
 
     fracture_points = []
     fractures = []
+    if face_intersection_factor is not None:
+        line_segments = []
     # Create fracture points
     for line in face_constraints:
         # Handle single points their own way
@@ -195,6 +207,23 @@ def pebi_grid_2D(
                 gmsh.model.geo.add_line(fracture_start, fracture_end)
             )
             fracture_start = fracture_end
+
+            if face_intersection_factor is not None:
+                line_segments.append([(line[i-1][0], line[i-1][1]), (line[i][0], line[i][1])])
+    
+    # Calculate intersections
+    intersection_points = []
+    if face_intersection_factor is not None:
+        for line_1, line_2 in combinations(line_segments, 2):
+            intersection = _find_intersection(
+                line_1[0], line_1[1], line_2[0], line_2[1]
+            )
+            if intersection is not None:
+                print(intersection)
+                intersection_points.append(
+                    gmsh.model.geo.add_point(intersection[0], intersection[1], 0)
+                )
+
 
     # Synchronize to prepare for embedding fracture face_constraints
     gmsh.model.geo.synchronize()
@@ -227,11 +256,23 @@ def pebi_grid_2D(
     gmsh.model.mesh.field.setNumber(2, "DistMin", min_threshold_distance)
     gmsh.model.mesh.field.setNumber(2, "DistMax", max_threshold_distance)
 
-    # We can use several fields here, see link above
-    # We can then select the minimum of all fields
+    # Add field for intersection points
+    gmsh.model.mesh.field.add("Distance", 3)
+    gmsh.model.mesh.field.setNumbers(3, "PointsList", intersection_points)
+    gmsh.model.mesh.field.add("Threshold", 4)
+    gmsh.model.mesh.field.setNumber(4, "InField", 3)
+    gmsh.model.mesh.field.setNumber(4, "SizeMax", cell_dimensions)
+    gmsh.model.mesh.field.setNumber(4, "DistMin", min_threshold_distance)
+    gmsh.model.mesh.field.setNumber(4, "DistMax", max_threshold_distance)
+    if face_intersection_factor is not None:
+        gmsh.model.mesh.field.setNumber(4, "SizeMin",
+            face_intersection_factor * cell_dimensions
+        )
 
-    # As we currently only have the treshold field, we use this as mesh
-    gmsh.model.mesh.field.setAsBackgroundMesh(2)
+    # We use the minimum of all fields as our background mesh
+    gmsh.model.mesh.field.add("Min", 5)
+    gmsh.model.mesh.field.setNumbers(5, "FieldsList", [2, 4])
+    gmsh.model.mesh.field.setAsBackgroundMesh(5)
 
     # As we define the entire element size in our background mesh, we disable
     # certain on-by-default mesh calculations
@@ -291,6 +332,48 @@ def _check_array_dict_and_return_line_list(face_constraints: dict):
         _assert_columns_have_same_length(face_constraints, "x", "y")
         return list(zip(face_constraints.get("x"), face_constraints.get("y")))
 
+def _find_intersection(line_1_start, line_1_end, line_2_start, line_2_end):
+    """Find the intersection of two line segments.
+
+    Method inspired by
+    https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect#565282
+    with credit, quote:
+        "Credit: this method is the 2-dimensional specialization of the 3D line
+        intersection algorithm from the article 'Intersection of two lines in
+        three-space' by Ronald Goldman, published in Graphics Gems, page 304
+
+    Args:
+        line_1_start (tuple): Start point of line 1
+        line_1_end (tuple): End point of line 1
+        line_2_start (tuple): Start point of line 2
+        line_2_end (tuple): End point of line 2
+    """
+    if line_1_start[0] > line_1_end[0]:
+        line_1_start, line_1_end = line_1_end, line_1_start
+    if line_2_start[0] > line_2_end[0]:
+        line_2_start, line_2_end = line_2_end, line_2_start
+    
+    def cross_product(v, w):
+        return v[0]*w[1] - v[1]*w[0]
+    
+    delta_1 = [line_1_end[0]-line_1_start[0], line_1_end[1]-line_1_start[1]] #r
+    delta_2 = [line_2_end[0]-line_2_start[0], line_2_end[1]-line_2_start[1]] #s
+
+    if cross_product(delta_1, delta_2) == 0:
+        # Either parallel or collinear -> No intersections we need to consider
+        return None
+    
+    line_difference = [                         # (q - p)
+        line_2_start[0] - line_1_start[0],
+        line_2_start[1] - line_1_start[1]
+    ]
+    t = cross_product(line_difference, delta_2) / cross_product(delta_1, delta_2)
+    u = cross_product(line_difference, delta_1) / cross_product(delta_1, delta_2)
+    if 0 < t < 1 and 0 < u < 1:
+        return [line_1_start[0] + t * delta_1[0], line_1_start[1] + t * delta_1[1]]
+    else:
+        return None
+
 ############################## END OF HELPERS ##############################
 
 
@@ -304,6 +387,7 @@ if __name__ == "__main__":
             [(0.2, 0.9), (0.9, 0.1)]
         ],
         size=[1, 1],
-        min_cell_dimensions = 0.05,
+        face_constraint_factor = 1/3,
+        face_intersection_factor = 1/9,
         savename=None,
         run_frontend=True)
