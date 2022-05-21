@@ -31,9 +31,11 @@ def pebi_grid_2D(
                     'dict[str, dict[str, float]]',
                     'dict[Any, dict[str, Iterable]]'] = None,
         face_constraint_factor: float = 1/3,
-        face_intersection_factor: float = None,
         min_threshold_distance: float = 0.05,
         max_threshold_distance: float = 0.2,
+        face_intersection_factor: float = None,
+        min_intersection_distance: float = None,
+        max_intersection_distance: float = None,
         fracture_mesh_sampling: int = 100,
         savename: str = "TEMP_Gmsh_MRST.m",
         run_frontend: bool = False
@@ -102,6 +104,11 @@ def pebi_grid_2D(
             Cells within min_threshold_distance will have size
             face_constraint_factor * cell_dimensions. Equivalent to FCFactor in
             MRST/UPR/pebiGrid2D. Defaults to 1/3.
+        min_threshold_distance (float, optional): Distance from face constraints
+            where cell dimensions will start increasing. Defaults to 0.05.
+        max_threshold_distance (float, optional): Distance from face constraints
+            where cell dimensions will be back to their default (max) value,
+            i.e. the supplied argument cell_dimensions. Defaults to 0.2.
         face_intersection_factor (float, optional): The size of the cells close
             to intersections between face constraints, as compared to supplied
             cell_dimensions. Cells within min_threshold_distance from an 
@@ -109,11 +116,13 @@ def pebi_grid_2D(
             If None, no extra cell shaping will occur around intersections.
             The factor is also used in "breaks" of lines, i.e. if there is a
             sharp "turn" in a line segment. Defaults to None.
-        min_threshold_distance (float, optional): Distance from face constraints
-            where cell dimensions will start increasing. Defaults to 0.05.
-        max_threshold_distance (float, optional): Distance from face constraints
+        min_intersection_distance (float, optional): Distance from intersections
+            where cell dimensions will start increasing. If None, will use
+            min_threshold_distance. Defaults to None.
+        max_intersection_distance (float, optional): Distance from intersections
             where cell dimensions will be back to their default (max) value,
-            i.e. the supplied argument cell_dimensions. Defaults to 0.2.
+            i.e. the supplied argument cell_dimensions. If None, will use
+            min_threshold_distance. Defaults to None.
         fracture_mesh_sampling (int, optional): The number of points along the
             face constraints should be sampled to calculate the threshold
             distances. Defaults to 100.
@@ -127,6 +136,10 @@ def pebi_grid_2D(
         face_constraints = []
     if size is None:
         size = [1, 1]
+    if min_intersection_distance is None:
+        min_intersection_distance = min_threshold_distance
+    if max_intersection_distance is None:
+        max_intersection_distance = max_threshold_distance
     
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(face_constraints, dict):
@@ -219,7 +232,6 @@ def pebi_grid_2D(
                 line_1[0], line_1[1], line_2[0], line_2[1]
             )
             if intersection is not None:
-                print(intersection)
                 intersection_points.append(
                     gmsh.model.geo.add_point(intersection[0], intersection[1], 0)
                 )
@@ -262,8 +274,8 @@ def pebi_grid_2D(
     gmsh.model.mesh.field.add("Threshold", 4)
     gmsh.model.mesh.field.setNumber(4, "InField", 3)
     gmsh.model.mesh.field.setNumber(4, "SizeMax", cell_dimensions)
-    gmsh.model.mesh.field.setNumber(4, "DistMin", min_threshold_distance)
-    gmsh.model.mesh.field.setNumber(4, "DistMax", max_threshold_distance)
+    gmsh.model.mesh.field.setNumber(4, "DistMin", min_intersection_distance)
+    gmsh.model.mesh.field.setNumber(4, "DistMax", max_intersection_distance)
     if face_intersection_factor is not None:
         gmsh.model.mesh.field.setNumber(4, "SizeMin",
             face_intersection_factor * cell_dimensions
@@ -369,7 +381,7 @@ def _find_intersection(line_1_start, line_1_end, line_2_start, line_2_end):
     ]
     t = cross_product(line_difference, delta_2) / cross_product(delta_1, delta_2)
     u = cross_product(line_difference, delta_1) / cross_product(delta_1, delta_2)
-    if 0 < t < 1 and 0 < u < 1:
+    if 0 <= t <= 1 and 0 <= u <= 1:
         return [line_1_start[0] + t * delta_1[0], line_1_start[1] + t * delta_1[1]]
     else:
         return None
