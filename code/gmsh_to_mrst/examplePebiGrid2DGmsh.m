@@ -2,7 +2,7 @@
 % Create a simple 2D mesh using Gmsh, called from MATLAB
 
 % Setup required variables
-resGridSize = 0.1;
+resGridSize = 0.2;
 domain = [1, 1];
 faceConstraints.a.x = [0.25 0.4 0.75];
 faceConstraints.a.y = [0.25 0.5 0.75];
