@@ -18,7 +18,10 @@ function G = pebiGrid2DGmsh(resGridSize, pdims, faceConstraints)
 
 pyDims = py.list(pdims);
 
-py.pebi_grid_2D.pebi_grid_2D(resGridSize, pyDims, faceConstraints);
+py.pebi_grid_2D.pebi_grid_2D( ...
+    cell_dimensions=resGridSize, ...
+    size=pyDims, ...
+    face_constraints=faceConstraints);
 G = 0;
 
 if isfile('TEMP_Gmsh_MRST.m')
