@@ -38,6 +38,7 @@ def pebi_grid_2D(
         max_intersection_distance: float = None,
         fracture_mesh_sampling: int = 100,
         mesh_algorithm: str = "Delaunay",
+        recombination_algorithm: str = None,
         savename: str = "TEMP_Gmsh_MRST.m",
         run_frontend: bool = False
     ):
@@ -51,9 +52,11 @@ def pebi_grid_2D(
 
     Args:
         cell_dimensions (float): Base dimensions of each cell.
+
         size (list, optional): Size of the domain, in the shape [xmax, ymax].
             The domain always starts at [0, 0]. If None, size will be set to
             [1, 1]. Defaults to None.
+
         face_constraints (list[Iterable] | dict[str, float] | dict[str, Iterable]
                 | dict[str, dict[str, float]] | dict[str, dict[str, Iterable]],
                 optional):
@@ -100,16 +103,20 @@ def pebi_grid_2D(
             NOTE: Any constraints must be wholly within the supplied domain,
             i.e. completely within the rectangle between [0, 0] and `size`!.
             If None, face_constraints will be an empty list. Defaults to None.
+
         face_constraint_factor (float, optional): The size of the cells close
             to the face constraints, as compared to supplied cell_dimensions.
             Cells within min_threshold_distance will have size
             face_constraint_factor * cell_dimensions. Equivalent to FCFactor in
             MRST/UPR/pebiGrid2D. Defaults to 1/3.
+
         min_threshold_distance (float, optional): Distance from face constraints
             where cell dimensions will start increasing. Defaults to 0.05.
+
         max_threshold_distance (float, optional): Distance from face constraints
             where cell dimensions will be back to their default (max) value,
             i.e. the supplied argument cell_dimensions. Defaults to 0.2.
+
         face_intersection_factor (float, optional): The size of the cells close
             to intersections between face constraints, as compared to supplied
             cell_dimensions. Cells within min_threshold_distance from an 
@@ -117,18 +124,22 @@ def pebi_grid_2D(
             If None, no extra cell shaping will occur around intersections.
             The factor is also used in "breaks" of lines, i.e. if there is a
             sharp "turn" in a line segment. Defaults to None.
+
         min_intersection_distance (float, optional): Distance from intersections
             where cell dimensions will start increasing. If None, will use
             min_threshold_distance. Defaults to None.
+
         max_intersection_distance (float, optional): Distance from intersections
             where cell dimensions will be back to their default (max) value,
             i.e. the supplied argument cell_dimensions. If None, will use
             min_threshold_distance. Defaults to None.
+
         fracture_mesh_sampling (int, optional): The number of points along the
             face constraints should be sampled to calculate the threshold
             distances. Defaults to 100.
-        mesh_algorithm (str, optional): What meshing algorithm should be used.
-            Can either be the Gmsh-given ID of the algorithm, a string:
+
+        mesh_algorithm (str | int, optional): What meshing algorithm should be
+            used. Can either be the Gmsh-given ID of the algorithm or a string:
                 "MeshAdapt" = 1
                 "Automatic" = 2
                 "Delaunay" = 5
@@ -136,9 +147,30 @@ def pebi_grid_2D(
                 "BAMG" = 7
                 "DelQuad" = 8
             Defaults to "Delaunay".
+
+        recombination_algorithm (str | int, optional). What recombination
+            algorithm should be used, and whether recombination should be done.
+            Recombination makes Gmsh attempt to create a quadrangle mesh, rather
+            than a triangle mesh. Can be either the Gmsh-given ID of the
+            algorithm or a string:
+                "Simple" = 0
+                "Blossom" = 1
+                "SimpleFull" = 2
+                "BlossomFull" = 3
+            If None, no recombination will be done.
+            NOTE: Blossom is Gmsh default, but struggles with constraints. It
+                may therefore be beneficial to use SimpleQuad, if there are
+                constraints.
+            NOTE 2: Recombination may lead to weird results for constraints,
+                as the recombination is done after constraints have been applied.
+                This is especially true for SimpleFull and BlossomFull, who
+                automatically perform a coarser mesh, followed by recombination,
+                smoothing and subdivision.
+                
         savename (str, optional): Name of the saved file. If None, no file will
             be saved. The MATLAB functions assume that the file will be saved
             as "TEMP_Gmsh_MRST.m". Defaults to "TEMP_Gmsh_MRST.m".
+
         run_frontend (bool, optional): Set to True in order to run the Gmsh
             frontend and show the created mesh. Defaults to False.
     """
@@ -174,6 +206,25 @@ def pebi_grid_2D(
             )
     else:
         mesh_algorithm = mesh_algorithm_dict.get(mesh_algorithm.lower(), 5)
+    
+    recombination_algorithm_dict = {
+        "simple": 0,
+        "blossom": 1,
+        "simplefull": 2,
+        "blossomfull": 3
+    }
+    if isinstance(recombination_algorithm, int):
+        if recombination_algorithm not in recombination_algorithm_dict.values():
+            raise ValueError(
+                "recombination_algorithm must be a legal value. Current value: "
+                + f"{recombination_algorithm}. Legal values: {recombination_algorithm_dict}"
+            )
+    elif recombination_algorithm is None:
+        pass
+    else:
+        recombination_algorithm = recombination_algorithm_dict.get(
+            recombination_algorithm.lower()
+        )
     
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(face_constraints, dict):
@@ -329,6 +380,10 @@ def pebi_grid_2D(
     # We finally set the meshing algorithm.
     gmsh.option.setNumber("Mesh.Algorithm", mesh_algorithm)
 
+    if recombination_algorithm is not None:
+        gmsh.option.setNumber("Mesh.RecombinationAlgorithm", recombination_algorithm)
+        gmsh.model.mesh.set_recombine(2, surface)
+
     # Generate 2D mesh
     gmsh.model.mesh.generate(2)
 
@@ -432,5 +487,7 @@ if __name__ == "__main__":
         size=[1, 1],
         face_constraint_factor = 1/3,
         face_intersection_factor = 1/9,
+        mesh_algorithm="DelQuad",
+        # recombination_algorithm="simplefull",
         savename=None,
         run_frontend=True)
