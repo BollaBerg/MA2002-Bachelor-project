@@ -20,6 +20,7 @@ import gmsh
 
 def pebi_grid_2D(cell_dimensions: float, size: list,
                 lines: Union['list[list]', 'dict[str, list]', 'dict[str, dict[str, list]]'],
+                savename: str = "TEMP_Gmsh_MRST.m",
                 _run_frontend: bool = False):
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(lines, dict):
@@ -84,12 +85,16 @@ def pebi_grid_2D(cell_dimensions: float, size: list,
                 f"Single-point fractures not implemented yet. Fracture: {line}"
             )
         
-        for i in range(len(line) - 1):
-            fracture_start = gmsh.model.geo.add_point(line[i][0], line[i][1], 0)
-            fracture_end = gmsh.model.geo.add_point(line[i+1][0], line[i+1][1], 0)
+        # There exists a line with at least 1 segment
+        # As line segment [i] starts with the end of line segment [i - 1],
+        # we avoid doubling on points by moving fracture_start out of the loop
+        fracture_start = gmsh.model.geo.add_point(line[0][0], line[0][1], 0)
+        for i in range(1, len(line)):
+            fracture_end = gmsh.model.geo.add_point(line[i][0], line[i][1], 0)
             fractures.append(
                 gmsh.model.geo.add_line(fracture_start, fracture_end)
             )
+            fracture_start = fracture_end
 
     # Synchronize to prepare for embedding fracture lines
     gmsh.model.geo.synchronize()
@@ -143,11 +148,13 @@ def pebi_grid_2D(cell_dimensions: float, size: list,
     # Generate 2D mesh
     gmsh.model.mesh.generate(2)
 
+    # Optionally save
+    if savename is not None:
+        gmsh.write(savename)
+    
+    # Optionally run frontend
     if _run_frontend:
         gmsh.fltk.run()
-    else:
-        # Save to disk
-        gmsh.write("TEMP_Gmsh_MRST.m")
 
     # Always finalize
     gmsh.finalize()
@@ -155,6 +162,7 @@ def pebi_grid_2D(cell_dimensions: float, size: list,
 if __name__ == "__main__":
     pebi_grid_2D(0.1, [1, 1], [
             [[0.2, 0.5], [0.8, 0.5]],
-            [(0.5, 0.2), (0.5, 0.8)],
+            [(0.5, 0.2), (0.5, 0.5), (0.5, 0.8)],
         ],
+        savename=None,
         _run_frontend=True)
