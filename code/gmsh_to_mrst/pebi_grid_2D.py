@@ -37,6 +37,7 @@ def pebi_grid_2D(
         min_intersection_distance: float = None,
         max_intersection_distance: float = None,
         fracture_mesh_sampling: int = 100,
+        mesh_algorithm: str = "Delaunay",
         savename: str = "TEMP_Gmsh_MRST.m",
         run_frontend: bool = False
     ):
@@ -126,6 +127,15 @@ def pebi_grid_2D(
         fracture_mesh_sampling (int, optional): The number of points along the
             face constraints should be sampled to calculate the threshold
             distances. Defaults to 100.
+        mesh_algorithm (str, optional): What meshing algorithm should be used.
+            Can either be the Gmsh-given ID of the algorithm, a string:
+                "MeshAdapt" = 1
+                "Automatic" = 2
+                "Delaunay" = 5
+                "Frontal" = 6
+                "BAMG" = 7
+                "DelQuad" = 8
+            Defaults to "Delaunay".
         savename (str, optional): Name of the saved file. If None, no file will
             be saved. The MATLAB functions assume that the file will be saved
             as "TEMP_Gmsh_MRST.m". Defaults to "TEMP_Gmsh_MRST.m".
@@ -140,6 +150,30 @@ def pebi_grid_2D(
         min_intersection_distance = min_threshold_distance
     if max_intersection_distance is None:
         max_intersection_distance = max_threshold_distance
+
+    # Handle mesh algorithm
+    # According to 
+    # https://gitlab.onelab.info/gmsh/gmsh/-/blob/master/tutorials/python/t10.py
+    # Frontal-Delaunay (6) usually leads to the highest quality meshes, but
+    # Delaunay (5) handles complex mesh sizes better - especially size fields
+    # with large element size gradients. We therefore default to Delaunay.
+    # For quad-shaped grids, "Frontal-Delaunay for Quads" (8) may be beneficial.
+    mesh_algorithm_dict = {
+        "meshadapt": 1,
+        "automatic": 2,
+        "delaunay": 5,
+        "frontal": 6,
+        "bamg": 7,
+        "delquad": 8
+    }
+    if isinstance(mesh_algorithm, int):
+        if mesh_algorithm not in mesh_algorithm_dict.values():
+            raise ValueError(
+                "mesh_algorithm must be a legal value. Current value: "
+                + f"{mesh_algorithm}. Legal values: {mesh_algorithm_dict}"
+            )
+    else:
+        mesh_algorithm = mesh_algorithm_dict.get(mesh_algorithm.lower(), 5)
     
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(face_constraints, dict):
@@ -292,11 +326,8 @@ def pebi_grid_2D(
     gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)
     gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
-    # We finally set the meshing algorithm to Delaunay.
-    # According to the link above, Frontal-Delaunay (6) usually leads to the
-    # highest quality meshes, but Delaunay (5) handles complex mesh sizes
-    # better - especially size fields with large element size gradients
-    gmsh.option.setNumber("Mesh.Algorithm", 5)
+    # We finally set the meshing algorithm.
+    gmsh.option.setNumber("Mesh.Algorithm", mesh_algorithm)
 
     # Generate 2D mesh
     gmsh.model.mesh.generate(2)
