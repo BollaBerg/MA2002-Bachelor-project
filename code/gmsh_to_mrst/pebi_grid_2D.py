@@ -22,14 +22,14 @@ import gmsh
 def pebi_grid_2D(
         cell_dimensions: float,
         *,
+        size: list = None,
         face_constraints: Union[
                     'list[list[Iterable]]',
                     'dict[str, float]',
                     'dict[str, Iterable]',
                     'dict[str, dict[str, float]]',
                     'dict[Any, dict[str, Iterable]]'] = None,
-        size: list = None,
-        min_cell_dimensions: float = None,
+        face_constraint_factor: float = 1/3,
         min_threshold_distance: float = 0.05,
         max_threshold_distance: float = 0.2,
         fracture_mesh_sampling: int = 100,
@@ -41,10 +41,14 @@ def pebi_grid_2D(
     This project was done as part of my Bachelor thesis during spring 2022, in
     order to help provide a secondary backend to the SINTEF-developed MATLAB
     module MRST, and its submodule UPR. For more information about MRST, see
-    https://www.sintef.no/projectweb/mrst/
+    https://www.sintef.no/projectweb/mrst/. For more information about UPR, see
+    https://www.sintef.no/projectweb/mrst/modules/upr/
 
     Args:
         cell_dimensions (float): Base dimensions of each cell.
+        size (list, optional): Size of the domain, in the shape [xmax, ymax].
+            The domain always starts at [0, 0]. If None, size will be set to
+            [1, 1]. Defaults to None.
         face_constraints (list[Iterable] | dict[str, float] | dict[str, Iterable]
                 | dict[str, dict[str, float]] | dict[str, dict[str, Iterable]],
                 optional):
@@ -81,7 +85,7 @@ def pebi_grid_2D(
                     with the corresponding float or list being the x- and y-
                     coordinates of point(s) along the constraint. It does not
                     matter what is used as keys for the top-level dictionary.
-                    Examples:s
+                    Examples:
                         >>> face_constraints = {
                             "line": {"x": [0.1, 0.9], "y": [0.1, 0.9]},
                             "point": {"x": 0.5, "y": 0.5},
@@ -90,12 +94,11 @@ def pebi_grid_2D(
                         }
             NOTE: Any constraints must be wholly within the supplied domain,
             i.e. completely within the rectangle between [0, 0] and `size`!
-        size (list, optional): Size of the domain, in the shape [xmax, ymax].
-            The domain always starts at [0, 0]. If None, size will be set to
-            [1, 1]. Defaults to None.
-        min_cell_dimensions (float, optional): Smallest cell dimensions to use
-            close to the face constraints. If None, min_cell_dimensions will be
-            set to cell_dimensions / 3. Defaults to None.
+        face_constraint_factor (float, optional): The size of the cells close
+            to the face constraints, as compared to supplied cell_dimensions.
+            Cells within min_threshold_distance will have size
+            face_constraint_factor * cell_dimensions. Equivalent to FCFactor in
+            MRST/UPR/pebiGrid2D. Defaults to 1/3.
         min_threshold_distance (float, optional): Distance from face constraints
             where cell dimensions will start increasing. Defaults to 0.05.
         max_threshold_distance (float, optional): Distance from face constraints
@@ -114,8 +117,6 @@ def pebi_grid_2D(
         face_constraints = []
     if size is None:
         size = [1, 1]
-    if min_cell_dimensions is None:
-        min_cell_dimensions = cell_dimensions / 3
     
     # Do some (massive) argument handling, for use in MATLAB
     if isinstance(face_constraints, dict):
@@ -219,7 +220,9 @@ def pebi_grid_2D(
     # change in element size depending on the computed distances
     gmsh.model.mesh.field.add("Threshold", 2)
     gmsh.model.mesh.field.setNumber(2, "InField", 1)
-    gmsh.model.mesh.field.setNumber(2, "SizeMin", min_cell_dimensions)
+    gmsh.model.mesh.field.setNumber(2, "SizeMin",
+        face_constraint_factor * cell_dimensions
+    )
     gmsh.model.mesh.field.setNumber(2, "SizeMax", cell_dimensions)
     gmsh.model.mesh.field.setNumber(2, "DistMin", min_threshold_distance)
     gmsh.model.mesh.field.setNumber(2, "DistMax", max_threshold_distance)
