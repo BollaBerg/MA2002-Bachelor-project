@@ -15,6 +15,7 @@ Output:
 """
 from array import array
 from itertools import combinations
+from math import atan2, sqrt
 from typing import Any, Union, Iterable
 
 import gmsh
@@ -382,7 +383,87 @@ def pebi_grid_2D(
         
         else:
             # line has at least 1 segment
-            pass
+            # We first handle the start, then all mid points, then the end
+            delta_x = line[1][0] - line[0][0]
+            delta_y = line[1][1] - line[0][1]
+            normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
+            point_1, point_2 = _get_extruded_points(line[0], normal_x, normal_y, cc_size)
+            start_1 = gmsh.model.geo.add_point(point_1[0], point_1[1], 0)
+            start_2 = gmsh.model.geo.add_point(point_2[0], point_2[1], 0)
+            start_line = gmsh.model.geo.add_line(start_1, start_2)
+            gmsh.model.geo.mesh.set_transfinite_curve(start_line, 2)
+
+            # Handle all midpoints
+            for i in range(1, len(line) - 1):
+                # We find the normal vector by finding the midpoint of point
+                # [i-1] and [1+1], then the vector from this midpoint to [i]
+                midpoint = (
+                    0.5 * (line[i-1][0] + line[i+1][0]),
+                    0.5 * (line[i-1][1] + line[i+1][1]),
+                )
+                mid_normal_x = line[i][0] - midpoint[0]
+                mid_normal_y = line[i][1] - midpoint[1]
+                if mid_normal_x == mid_normal_y == 0:
+                    mid_normal_x, mid_normal_y = normal_x, normal_y
+                end_point_1, end_point_2 = _get_extruded_points(
+                    line[i], mid_normal_x, mid_normal_y, cc_size
+                )
+                if _line_bends_towards_right(line[i-1], line[i], line[i+1]):
+                    end_point_1, end_point_2 = end_point_2, end_point_1
+                
+                end_1 = gmsh.model.geo.add_point(end_point_1[0], end_point_1[1], 0)
+                end_2 = gmsh.model.geo.add_point(end_point_2[0], end_point_2[1], 0)
+                parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
+                parallel_line_2 = gmsh.model.geo.add_line(end_2, start_1)
+                end_line = gmsh.model.geo.add_line(end_1, end_2)
+
+                cc_loops.append(
+                    gmsh.model.geo.add_curve_loop([
+                        start_line,
+                        parallel_line_1,
+                        end_line,
+                        parallel_line_2
+                    ])
+                )
+                cc_surfaces.append(
+                    gmsh.model.geo.add_plane_surface([cc_loops[-1]])
+                )
+                gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
+                gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
+                gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
+                gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
+                gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+
+                start_1, start_2 = end_2, end_1
+                start_line = -end_line
+            
+            # Handle the end point
+            delta_x = line[-1][0] - line[-2][0]
+            delta_y = line[-1][1] - line[-2][1]
+            normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
+            end_point_2, end_point_1 = _get_extruded_points(line[-1], normal_x, normal_y, cc_size)
+            end_1 = gmsh.model.geo.add_point(end_point_1[0], end_point_1[1], 0)
+            end_2 = gmsh.model.geo.add_point(end_point_2[0], end_point_2[1], 0)
+            parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
+            parallel_line_2 = gmsh.model.geo.add_line(end_2, start_1)
+            end_line = gmsh.model.geo.add_line(end_1, end_2)
+            cc_loops.append(
+                gmsh.model.geo.add_curve_loop([
+                    start_line,
+                    parallel_line_1,
+                    end_line,
+                    parallel_line_2
+                ])
+            )
+            cc_surfaces.append(
+                gmsh.model.geo.add_plane_surface([cc_loops[-1]])
+            )
+            gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
+            gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
+            gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
+            gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
+            gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+                
 
 
     # Create curve loop of circumference
@@ -444,7 +525,7 @@ def pebi_grid_2D(
 
     # We use the minimum of all fields as our background mesh
     gmsh.model.mesh.field.add("Min", 6)
-    gmsh.model.mesh.field.setNumbers(6, "FieldsList", [2, 4])
+    gmsh.model.mesh.field.setNumbers(6, "FieldsList", [2, 4, 5])
     gmsh.model.mesh.field.setAsBackgroundMesh(6)
 
     # As we define the entire element size in our background mesh, we disable
@@ -581,6 +662,36 @@ def _format_constraints(constraints) -> list:
             constraints = new_constraints
     return constraints
 
+def _get_perpendicular(delta_x, delta_y) -> tuple[float, float]:
+    return -delta_y, delta_x
+
+def _get_extruded_points(
+            base_point, normal_x, normal_y, cc_size
+        ) -> tuple[tuple[float, float], tuple[float, float]]:
+    # "Normalize" normal_x and normal_y, such that the length of the normal
+    # vector = 1
+    prev_length = sqrt(normal_x**2 + normal_y**2)
+    normal_x = normal_x / prev_length
+    normal_y = normal_y / prev_length
+    extruded_above = (
+        base_point[0] + normal_x * cc_size**2 / 2,
+        base_point[1] + normal_y * cc_size**2 / 2
+    )
+    extruded_below = (
+        base_point[0] - normal_x * cc_size**2 / 2,
+        base_point[1] - normal_y * cc_size**2 / 2
+    )
+    return extruded_above, extruded_below
+
+def _line_bends_towards_right(start_point, mid_point, end_point) -> bool:
+    angle_start_mid = atan2(
+        mid_point[1] - start_point[1], mid_point[0] - start_point[0]
+    )
+    angle_start_end = atan2(
+        end_point[1] - start_point[1], end_point[0] - start_point[0]
+    )
+    return angle_start_mid > angle_start_end
+
 ############################## END OF HELPERS ##############################
 
 
@@ -594,7 +705,8 @@ if __name__ == "__main__":
             [(0.2, 0.9), (0.9, 0.1)]
         ],
         cell_constraints=[
-            [(0.1, 0.1)]
+            [(0.1, 0.1)],
+            [(0.5, 0.8), (0.6, 0.7), (0.7, 0.8), (0.9, 0.8)],
         ],
         size=[1, 1],
         face_constraint_factor = 1/3,
