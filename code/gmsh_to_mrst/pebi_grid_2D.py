@@ -37,6 +37,13 @@ def pebi_grid_2D(
         min_intersection_distance: float = None,
         max_intersection_distance: float = None,
         fracture_mesh_sampling: int = 100,
+        cell_constraints: Union[
+                    'list[list[Iterable]]',
+                    'dict[str, float]',
+                    'dict[str, Iterable]',
+                    'dict[str, dict[str, float]]',
+                    'dict[Any, dict[str, Iterable]]'] = None,
+        cell_constraint_factor: float = 1/2,
         mesh_algorithm: str = "Delaunay",
         recombination_algorithm: str = None,
         savename: str = "TEMP_Gmsh_MRST.m",
@@ -138,6 +145,58 @@ def pebi_grid_2D(
             face constraints should be sampled to calculate the threshold
             distances. Defaults to 100.
 
+        cell_constraints (list[Iterable] | dict[str, float] | dict[str, Iterable]
+                | dict[str, dict[str, float]] | dict[str, dict[str, Iterable]],
+                optional):
+            Constraints for the cell centroids. Each constraint is a line,
+            which the method will attempt to place in the center of the returned
+            grid. The lines are assumed to be linear between the coordinates.
+            If a constraint is only one coordinate, the line is treated as a
+            point constraint.
+            Legal forms:
+                list[list[Iterable]]: Primarily used when calling the function
+                    from Python. Each element of cell constraint is a list of
+                    point(s) along the constraint. Note that each element must
+                    be a list of points, even if there is only one point!
+                    Examples:
+                        >>> cell_constraints = [
+                                [(0.1, 0.1), (0.9, 0.9)],
+                                [(0.2, 0.8), (0.5, 0.5), (0.8, 0.2)]
+                            ]
+                        >>> cell_constraints = [
+                                [(0.5, 0.5)],
+                                [(0.1, 0.1), (0.9, 0.9)]
+                            ]
+                dict[str, float] | dict[str, list]: Used for only one
+                    constraint line, primarily when the function is called
+                    from MATLAB. cell_constraints must contain the keys "x" and
+                    "y", with the corresponding float or list being the x- and
+                    y-coordinates of point(s) along the constraint.
+                    Examples:
+                        >>> cell_constraints = {"x": [0.1, 0.9], "y": [0.1, 0.9]}
+                        >>> cell_constraints = {"x": 0.5, "y": 0.5}
+                dict[Any, dict[str, float]] | dict[Any, dict[str, Iterable]]:
+                    Used for more than one constraint line, primarily when the
+                    function is called from MATLAB. Each element in
+                    cell_constraints.values() must contain keys "x" and "y",
+                    with the corresponding float or list being the x- and y-
+                    coordinates of point(s) along the constraint. It does not
+                    matter what is used as keys for the top-level dictionary.
+                    Examples:
+                        >>> cell_constraints = {
+                            "line": {"x": [0.1, 0.9], "y": [0.1, 0.9]},
+                            "point": {"x": 0.5, "y": 0.5},
+                            "keys dont matter": {"x": 0.1, "y": 0.9}.
+                            2022: {"x": 0.9, "y": 0.1}
+                        }
+            NOTE: Any constraints must be wholly within the supplied domain,
+            i.e. completely within the rectangle between [0, 0] and `size`!.
+            If None, cell_constraints will be an empty list. Defaults to None.
+
+        cell_constraint_factor (float, optional): The size of the used for
+            cell constraints, as compared to supplied cell_dimensions.
+            Equivalent to CCFactor in MRST/UPR/pebiGrid2D. Defaults to 1/2.
+
         mesh_algorithm (str | int, optional): What meshing algorithm should be
             used. Can either be the Gmsh-given ID of the algorithm or a string:
                 "MeshAdapt" = 1
@@ -182,6 +241,8 @@ def pebi_grid_2D(
         min_intersection_distance = min_threshold_distance
     if max_intersection_distance is None:
         max_intersection_distance = max_threshold_distance
+    if cell_constraints is None:
+        cell_constraints = []
 
     # Handle mesh algorithm
     # According to 
@@ -207,6 +268,7 @@ def pebi_grid_2D(
     else:
         mesh_algorithm = mesh_algorithm_dict.get(mesh_algorithm.lower(), 5)
     
+    # Do the same for the recombination algorithm
     recombination_algorithm_dict = {
         "simple": 0,
         "blossom": 1,
@@ -227,35 +289,8 @@ def pebi_grid_2D(
         )
     
     # Do some (massive) argument handling, for use in MATLAB
-    if isinstance(face_constraints, dict):
-        if len(face_constraints) == 0:
-            # face_constraints is an empty list -> No fractures to handle,
-            # simply create a single mesh within size
-            face_constraints = []
-        elif isinstance(list(face_constraints.values())[0], array):
-            # If data is sent from MATLAB, then face_constraints is a dict
-            # If there is only one line, then we accept it as a 1D dict, i.e.
-            # one can write
-            #   faceConstraints.x = [x1 ...];
-            #   faceConstraints.y = [y1 ...];
-            # Then face_constraints is a dict in the shape {x: array, y: array}
-            face_constraints = _check_array_dict_and_return_line_list(face_constraints)
-
-        elif isinstance(list(face_constraints.values())[0], dict):
-            # If data is sent from MATLAB, then face_constraints is a dict of dicts
-            # If there are more than one line, then it must be a 2D dict, i.e.
-            # one can write
-            #   faceConstraints.line1.x = [x11 ...];
-            #   faceConstraints.line1.y = [y11 ...];
-            #   faceConstraints.line2.x = [x21 ...];
-            #   faceConstraints.line2.y = [y21 ...];
-            # Each element in face_constraints.values is a dict of {x: array, y: array}
-            new_face_constraints = []
-            for constraint in face_constraints.values():
-                new_face_constraints.append(
-                    _check_array_dict_and_return_line_list(constraint)
-                )
-            face_constraints = new_face_constraints
+    face_constraints = _format_constraints(face_constraints)
+    cell_constraints = _format_constraints(cell_constraints)
     
     gmsh.initialize()
     gmsh.model.add("pebiGrid2D")
@@ -471,6 +506,39 @@ def _find_intersection(line_1_start, line_1_end, line_2_start, line_2_end):
         return [line_1_start[0] + t * delta_1[0], line_1_start[1] + t * delta_1[1]]
     else:
         return None
+
+
+def _format_constraints(constraints) -> list:
+    if isinstance(constraints, dict):
+        if len(constraints) == 0:
+            # constraints is an empty list -> No fractures to handle,
+            # simply create a single mesh within size
+            constraints = []
+        elif isinstance(list(constraints.values())[0], array):
+            # If data is sent from MATLAB, then constraints is a dict
+            # If there is only one line, then we accept it as a 1D dict, i.e.
+            # one can write
+            #   constraints.x = [x1 ...];
+            #   constraints.y = [y1 ...];
+            # Then constraints is a dict in the shape {x: array, y: array}
+            constraints = _check_array_dict_and_return_line_list(constraints)
+
+        elif isinstance(list(constraints.values())[0], dict):
+            # If data is sent from MATLAB, then constraints is a dict of dicts
+            # If there are more than one line, then it must be a 2D dict, i.e.
+            # one can write
+            #   constraints.line1.x = [x11 ...];
+            #   constraints.line1.y = [y11 ...];
+            #   constraints.line2.x = [x21 ...];
+            #   constraints.line2.y = [y21 ...];
+            # Each element in constraints.values is a dict of {x: array, y: array}
+            new_constraints = []
+            for constraint in constraints.values():
+                new_constraints.append(
+                    _check_array_dict_and_return_line_list(constraint)
+                )
+            constraints = new_constraints
+    return constraints
 
 ############################## END OF HELPERS ##############################
 
