@@ -311,12 +311,7 @@ def pebi_grid_2D(
         gmsh.model.geo.add_line(corners[3], corners[0]),
     ]
 
-    # Create curve loop of circumference
-    circumference = gmsh.model.geo.add_curve_loop(circumference_face_constraints)
-    
-    # Define surface from circumference
-    surface = gmsh.model.geo.add_plane_surface([circumference])
-
+    # Create fractures (face constraints)
     fracture_points = []
     fractures = []
     if face_intersection_factor is not None:
@@ -356,6 +351,46 @@ def pebi_grid_2D(
                     gmsh.model.geo.add_point(intersection[0], intersection[1], 0)
                 )
 
+    # Create cell constraints
+    cc_loops = []
+    cc_surfaces = []
+    cc_size = cell_constraint_factor * cell_dimensions
+    for line in cell_constraints:
+        if len(line) == 1:
+            # line is a single point
+            x, y = line[0][0], line[0][1]
+            surrounding_points = [
+                gmsh.model.geo.add_point(x - cc_size/2, y, 0),
+                gmsh.model.geo.add_point(x, y + cc_size/2, 0),
+                gmsh.model.geo.add_point(x + cc_size/2, y, 0),
+                gmsh.model.geo.add_point(x, y - cc_size/2, 0)
+            ]
+            surrounding_lines = [
+                gmsh.model.geo.add_line(surrounding_points[0], surrounding_points[1]),
+                gmsh.model.geo.add_line(surrounding_points[1], surrounding_points[2]),
+                gmsh.model.geo.add_line(surrounding_points[2], surrounding_points[3]),
+                gmsh.model.geo.add_line(surrounding_points[3], surrounding_points[0]),
+            ]
+            cc_loops.append(
+                gmsh.model.geo.add_curve_loop(surrounding_lines)
+            )
+            cc_surfaces.append(gmsh.model.geo.add_plane_surface([cc_loops[-1]]))
+            for sur_line in surrounding_lines:
+                gmsh.model.geo.mesh.set_transfinite_curve(sur_line, 2)
+            gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
+            gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+        
+        else:
+            # line has at least 1 segment
+            pass
+
+
+    # Create curve loop of circumference
+    circumference = gmsh.model.geo.add_curve_loop(circumference_face_constraints)
+    
+    # Define surface from circumference
+    # We remove the loops created from cell constraints
+    surface = gmsh.model.geo.add_plane_surface([circumference, *cc_loops])
 
     # Synchronize to prepare for embedding fracture face_constraints
     gmsh.model.geo.synchronize()
@@ -401,10 +436,16 @@ def pebi_grid_2D(
             face_intersection_factor * cell_dimensions
         )
 
+    # Add field for cell constraints
+    gmsh.model.mesh.field.add("Constant", 5)
+    gmsh.model.mesh.field.setNumbers(5, "SurfacesList", cc_surfaces)
+    gmsh.model.mesh.field.setNumber(5, "VIn", cc_size)
+    gmsh.model.mesh.field.setNumber(5, "VOut", cell_dimensions)
+
     # We use the minimum of all fields as our background mesh
-    gmsh.model.mesh.field.add("Min", 5)
-    gmsh.model.mesh.field.setNumbers(5, "FieldsList", [2, 4])
-    gmsh.model.mesh.field.setAsBackgroundMesh(5)
+    gmsh.model.mesh.field.add("Min", 6)
+    gmsh.model.mesh.field.setNumbers(6, "FieldsList", [2, 4])
+    gmsh.model.mesh.field.setAsBackgroundMesh(6)
 
     # As we define the entire element size in our background mesh, we disable
     # certain on-by-default mesh calculations
@@ -551,6 +592,9 @@ if __name__ == "__main__":
             [(0.25, 0.25), (0.4, 0.5), (0.75, 0.75)],
             [(0.8, 0.1), (0.9, 0.2)],
             [(0.2, 0.9), (0.9, 0.1)]
+        ],
+        cell_constraints=[
+            [(0.1, 0.1)]
         ],
         size=[1, 1],
         face_constraint_factor = 1/3,
