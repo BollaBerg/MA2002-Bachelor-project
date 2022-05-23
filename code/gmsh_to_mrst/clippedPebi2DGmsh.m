@@ -12,7 +12,7 @@ function G = clippedPebi2DGmsh(resGridSize, size, varargin)
 %                   domain always starts at [0, 0].
 %
 % OPTIONAL PARAMETERS
-%   faceConstrants  - A struct of vectors. Each vector, size nf x 2, is the
+%   faceConstraints - A struct of vectors. Each vector, size nf x 2, is the
 %                   coordinates of a surface-trace. The surface is
 %                   assumed to be linear between the coordinates. The
 %                   function will place sites such that the surface is
@@ -47,7 +47,7 @@ function G = clippedPebi2DGmsh(resGridSize, size, varargin)
 %                   dimensions will start increasing. If missing, will use
 %                   min_threshold_distance. Defaults to missing.
 %
-%   max_intersection_distance - Float. Distance from intersections where
+%   maxIntersectionDistance - Float. Distance from intersections where
 %                   cell dimensions will be back to their default (max)
 %                   value, i.e. the supplied argument cell_dimensions. If
 %                   missing, will use min_threshold_distance. Defaults to
@@ -117,125 +117,35 @@ function G = clippedPebi2DGmsh(resGridSize, size, varargin)
 %                       recombination, smoothing and subdivision.
 %
 
-defaultFaceConstraints = struct;
-defaultFaceConstraintFactor = 1/3;
-defaultMinThresholdDistance = 0.05;
-defaultMaxThresholdDistance = 0.2;
-defaultFaceIntersectionFactor = string(missing);   % => Python None
-defaultMinIntersectionDistance = string(missing);
-defaultMaxIntersectionDistance = string(missing);
-defaultFractureMeshSampling = 100;
-defaultCellConstraints = struct;
-defaultCellConstraintFactor = 1/4;
-defaultCellConstraintLineFactor = string(missing);
-defaultCellConstraintPointFactor = string(missing);
-defaultMeshAlgorithm = "Delaunay";
-defaultRecombinationAlgorithm = string(missing);
 
-    function valid = validMeshAlgorithm(x)
-        legalStrings = {'MeshAdapt', 'Automatic', 'Delaunay', 'Frontal', 'BAMG', 'DelQuad'};
-        if (isinteger(x) && ismember(x, [1 2 5 6 7 8]))
-            valid = true;
-        else
-            switch validatestring(x, legalStrings)
-                case legalStrings
-                    valid = true;
-                otherwise
-                    valid = false;
-            end
-        end
+% clippedPebi2D assumes P is an array of Voronoi sites, while 
+% pyG.nodes.coords is an array of Delaunay sites. However, due to the
+% duality of the two, we can use pyG.nodes.coords as Voronoi sites,
+% as long as we swap faceConstraints and cellConstraints. This way, the
+% Delaunay sites (in pyG.nodes.coords) are located along the
+% faceConstraints, which gives us the right result when using them as
+% Voronoi sites in clippedPebi2D.
+for i = 1:length(varargin)
+    if strcmp(varargin(i), 'faceConstraints')
+        varargin{i} = 'cellConstraints';
+    elseif strcmp(varargin(i), 'cellConstraints')
+        varargin{i} = 'faceConstraints';
+    elseif strcmp(varargin(i), 'cellConstraintFactor')
+        varargin{i} = 'faceConstraintFactor';
+    elseif strcmp(varargin(i), 'faceConstraintFactor')
+        varargin{i} = 'cellConstraintFactor';
     end
-
-    function valid = validRecombinationAlgorithm(x)
-        legalStrings = {'Simple', 'Blossom', 'SimpleFull', 'BlossomFull'};
-        if ismissing(x)
-            valid = true;
-        elseif (isinteger(x) && ismember(x, [0 1 2 3]))
-            valid = true;
-        else
-            switch validatestring(x, legalStrings)
-                case legalStrings
-                    valid = true;
-                otherwise
-                    valid = false;
-            end
-        end
-    end
-
-    validFloat = @(x) isfloat(x) && (x > 0);
-    validSize = @(x) isnumeric(x) && length(x) >= 2;
-    function valid = validOptionalFloat(x)
-        if ismissing(x)
-            valid = true;
-        elseif (isfloat(x) && (x > 0))
-            valid = true;
-        else
-            valid = false;
-        end
-    end
-    validInt = @(x) isinteger(x) && (x > 0);
-
-p = inputParser;
-addRequired(p, 'resGridSize', validFloat);
-addRequired(p, 'size', validSize);
-addParameter(p, 'faceConstraints', defaultFaceConstraints);
-addParameter(p, 'faceConstraintFactor', defaultFaceConstraintFactor, validFloat);
-addParameter(p, 'minThresholdDistance', defaultMinThresholdDistance, validFloat);
-addParameter(p, 'maxThresholdDistance', defaultMaxThresholdDistance, validFloat);
-addParameter(p, 'faceIntersectionFactor', defaultFaceIntersectionFactor, @validOptionalFloat);
-addParameter(p, 'minIntersectionDistance', defaultMinIntersectionDistance, @validOptionalFloat);
-addParameter(p, 'maxIntersectionDistance', defaultMaxIntersectionDistance, @validOptionalFloat);
-addParameter(p, 'fractureMeshSampling', defaultFractureMeshSampling, validInt);
-addParameter(p, 'cellConstraints', defaultCellConstraints);
-addParameter(p, 'cellConstraintFactor', defaultCellConstraintFactor, validFloat);
-addParameter(p, 'cellConstraintLineFactor', defaultCellConstraintLineFactor, @validOptionalFloat);
-addParameter(p, 'cellConstraintPointFactor', defaultCellConstraintPointFactor, @validOptionalFloat);
-addParameter(p, 'meshAlgoritm', defaultMeshAlgorithm, @validMeshAlgorithm);
-addParameter(p, 'recombinationAlgorithm', defaultRecombinationAlgorithm, @validRecombinationAlgorithm);
-
-parse(p, resGridSize, size, varargin{:});
-
-py.pebi_grid_2D.pebi_grid_2D( ...
-    cell_dimensions = p.Results.resGridSize, ...
-    size = py.list(p.Results.size), ...
-    face_constraints = p.Results.cellConstraints, ...   % We swap faceConstraints and cellConstraints. See explanation below
-    face_constraint_factor = p.Results.faceConstraintFactor, ...
-    min_threshold_distance = p.Results.minThresholdDistance, ...
-    max_threshold_distance = p.Results.maxThresholdDistance, ...
-    face_intersection_factor = p.Results.faceIntersectionFactor, ...
-    min_intersection_distance = p.Results.minIntersectionDistance, ...
-    max_intersection_distance = p.Results.maxIntersectionDistance, ...
-    fracture_mesh_sampling = p.Results.fractureMeshSampling, ...
-    cell_constraints = p.Results.faceConstraints, ...   % We swap faceConstraints and cellConstraints. See explanation below
-    cell_constraint_factor = p.Results.cellConstraintFactor, ...
-    cell_constraint_line_factor = p.Results.cellConstraintLineFactor, ...
-    cell_constraint_point_factor = p.Results.cellConstraintPointFactor, ...
-    mesh_algorithm = p.Results.meshAlgoritm, ...
-    recombination_algorithm = p.Results.recombinationAlgorithm, ...
-    savename = "TEMP_Gmsh_MRST.m");
-
-if isfile('TEMP_Gmsh_MRST.m')
-    pyG = gmshToMRST('TEMP_Gmsh_MRST.m');
-
-    bnd = [
-        0 0;
-        p.Results.size(1) 0;
-        p.Results.size(1) p.Results.size(2);
-        0 p.Results.size(2);
-    ];
-
-    disp(bnd);
-    % clippedPebi2D assumes P is an array of Voronoi sites, while 
-    % pyG.nodes.coords is an array of Delaunay sites. However, due to the
-    % duality of the two, we can use pyG.nodes.coords as Voronoi sites,
-    % as long as we swap faceConstraints and cellConstraints. This way, the
-    % Delaunay sites (in pyG.nodes.coords) are located along the
-    % faceConstraints, which gives us the right result when using them as
-    % Voronoi sites in clippedPebi2D.
-    G = clippedPebi2D(pyG.nodes.coords, bnd);
-    delete TEMP_Gmsh_MRST.m
-else
-    error("No file 'TEMP_Gmsh_MRST.m' generated by python call")
 end
+
+pyG = pebiGrid2DGmsh(resGridSize, size, varargin{:});
+
+bnd = [
+    0 0;
+    size(1) 0;
+    size(1) size(2);
+    0 size(2);
+];
+
+G = clippedPebi2D(pyG.nodes.coords, bnd);
 
 end
