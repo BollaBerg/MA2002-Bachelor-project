@@ -44,7 +44,9 @@ def pebi_grid_2D(
                     'dict[str, Iterable]',
                     'dict[str, dict[str, float]]',
                     'dict[Any, dict[str, Iterable]]'] = None,
-        cell_constraint_factor: float = 1/2,
+        cell_constraint_factor: float = 1/4,
+        cell_constraint_line_factor: float = None,
+        cell_constraint_point_factor: float = None,
         mesh_algorithm: str = "Delaunay",
         recombination_algorithm: str = None,
         savename: str = "TEMP_Gmsh_MRST.m",
@@ -194,9 +196,21 @@ def pebi_grid_2D(
             i.e. completely within the rectangle between [0, 0] and `size`!.
             If None, cell_constraints will be an empty list. Defaults to None.
 
-        cell_constraint_factor (float, optional): The size of the used for
-            cell constraints, as compared to supplied cell_dimensions.
-            Equivalent to CCFactor in MRST/UPR/pebiGrid2D. Defaults to 1/2.
+        cell_constraint_factor (float, optional): The size used for cells
+            around cell constraints, as compared to supplied cell_dimensions.
+            Equivalent to CCFactor in MRST/UPR/pebiGrid2D. Defaults to 1/4.
+
+        cell_constraint_line_factor (float, optional): The size used for cells
+            around cell constraint lines, as compared to the supplied
+            cell_dimensions. Overrides cell_constraint_factor for lines. If
+            set to None, cell_constraint_factor will be used for lines.
+            Defaults to None.
+            
+        cell_constraint_point_factor (float, optional): The size used for cells
+            around cell constraint points, as compared to the supplied
+            cell_dimensions. Overrides cell_constraint_factor for points. If
+            set to None, cell_constraint_factor will be used for points.
+            Defaults to None.
 
         mesh_algorithm (str | int, optional): What meshing algorithm should be
             used. Can either be the Gmsh-given ID of the algorithm or a string:
@@ -244,6 +258,10 @@ def pebi_grid_2D(
         max_intersection_distance = max_threshold_distance
     if cell_constraints is None:
         cell_constraints = []
+    if cell_constraint_line_factor is None:
+        cell_constraint_line_factor = cell_constraint_factor
+    if cell_constraint_point_factor is None:
+        cell_constraint_point_factor = cell_constraint_factor
 
     # Handle mesh algorithm
     # According to 
@@ -354,17 +372,19 @@ def pebi_grid_2D(
 
     # Create cell constraints
     cc_loops = []
-    cc_surfaces = []
-    cc_size = cell_constraint_factor * cell_dimensions
+    cc_point_surfaces = []
+    cc_line_surfaces = []
+    cc_point_size = cell_constraint_point_factor * cell_dimensions
+    cc_line_size = cell_constraint_line_factor * cell_dimensions
     for line in cell_constraints:
         if len(line) == 1:
             # line is a single point
             x, y = line[0][0], line[0][1]
             surrounding_points = [
-                gmsh.model.geo.add_point(x - cc_size/2, y, 0),
-                gmsh.model.geo.add_point(x, y + cc_size/2, 0),
-                gmsh.model.geo.add_point(x + cc_size/2, y, 0),
-                gmsh.model.geo.add_point(x, y - cc_size/2, 0)
+                gmsh.model.geo.add_point(x - cc_point_size/2, y, 0),
+                gmsh.model.geo.add_point(x, y + cc_point_size/2, 0),
+                gmsh.model.geo.add_point(x + cc_point_size/2, y, 0),
+                gmsh.model.geo.add_point(x, y - cc_point_size/2, 0)
             ]
             surrounding_lines = [
                 gmsh.model.geo.add_line(surrounding_points[0], surrounding_points[1]),
@@ -375,11 +395,11 @@ def pebi_grid_2D(
             cc_loops.append(
                 gmsh.model.geo.add_curve_loop(surrounding_lines)
             )
-            cc_surfaces.append(gmsh.model.geo.add_plane_surface([cc_loops[-1]]))
+            cc_point_surfaces.append(gmsh.model.geo.add_plane_surface([cc_loops[-1]]))
             for sur_line in surrounding_lines:
                 gmsh.model.geo.mesh.set_transfinite_curve(sur_line, 2)
-            gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
-            gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+            gmsh.model.geo.mesh.set_transfinite_surface(cc_point_surfaces[-1])
+            gmsh.model.geo.mesh.set_recombine(2, cc_point_surfaces[-1])
         
         else:
             # line has at least 1 segment
@@ -387,7 +407,7 @@ def pebi_grid_2D(
             delta_x = line[1][0] - line[0][0]
             delta_y = line[1][1] - line[0][1]
             normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
-            point_1, point_2 = _get_extruded_points(line[0], normal_x, normal_y, cc_size)
+            point_1, point_2 = _get_extruded_points(line[0], normal_x, normal_y, cc_line_size)
             start_1 = gmsh.model.geo.add_point(point_1[0], point_1[1], 0)
             start_2 = gmsh.model.geo.add_point(point_2[0], point_2[1], 0)
             start_line = gmsh.model.geo.add_line(start_1, start_2)
@@ -406,7 +426,7 @@ def pebi_grid_2D(
                 if mid_normal_x == mid_normal_y == 0:
                     mid_normal_x, mid_normal_y = normal_x, normal_y
                 end_point_1, end_point_2 = _get_extruded_points(
-                    line[i], mid_normal_x, mid_normal_y, cc_size
+                    line[i], mid_normal_x, mid_normal_y, cc_line_size
                 )
                 if _line_bends_towards_right(line[i-1], line[i], line[i+1]):
                     end_point_1, end_point_2 = end_point_2, end_point_1
@@ -425,14 +445,14 @@ def pebi_grid_2D(
                         parallel_line_2
                     ])
                 )
-                cc_surfaces.append(
+                cc_line_surfaces.append(
                     gmsh.model.geo.add_plane_surface([cc_loops[-1]])
                 )
                 gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
                 gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
                 gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
-                gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
-                gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+                gmsh.model.geo.mesh.set_transfinite_surface(cc_line_surfaces[-1])
+                gmsh.model.geo.mesh.set_recombine(2, cc_line_surfaces[-1])
 
                 start_1, start_2 = end_2, end_1
                 start_line = -end_line
@@ -441,7 +461,7 @@ def pebi_grid_2D(
             delta_x = line[-1][0] - line[-2][0]
             delta_y = line[-1][1] - line[-2][1]
             normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
-            end_point_2, end_point_1 = _get_extruded_points(line[-1], normal_x, normal_y, cc_size)
+            end_point_2, end_point_1 = _get_extruded_points(line[-1], normal_x, normal_y, cc_line_size)
             end_1 = gmsh.model.geo.add_point(end_point_1[0], end_point_1[1], 0)
             end_2 = gmsh.model.geo.add_point(end_point_2[0], end_point_2[1], 0)
             parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
@@ -455,14 +475,14 @@ def pebi_grid_2D(
                     parallel_line_2
                 ])
             )
-            cc_surfaces.append(
+            cc_line_surfaces.append(
                 gmsh.model.geo.add_plane_surface([cc_loops[-1]])
             )
             gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
             gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
             gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
-            gmsh.model.geo.mesh.set_transfinite_surface(cc_surfaces[-1])
-            gmsh.model.geo.mesh.set_recombine(2, cc_surfaces[-1])
+            gmsh.model.geo.mesh.set_transfinite_surface(cc_line_surfaces[-1])
+            gmsh.model.geo.mesh.set_recombine(2, cc_line_surfaces[-1])
                 
 
 
@@ -517,16 +537,10 @@ def pebi_grid_2D(
             face_intersection_factor * cell_dimensions
         )
 
-    # Add field for cell constraints
-    gmsh.model.mesh.field.add("Constant", 5)
-    gmsh.model.mesh.field.setNumbers(5, "SurfacesList", cc_surfaces)
-    gmsh.model.mesh.field.setNumber(5, "VIn", cc_size)
-    gmsh.model.mesh.field.setNumber(5, "VOut", cell_dimensions)
-
     # We use the minimum of all fields as our background mesh
-    gmsh.model.mesh.field.add("Min", 6)
-    gmsh.model.mesh.field.setNumbers(6, "FieldsList", [2, 4, 5])
-    gmsh.model.mesh.field.setAsBackgroundMesh(6)
+    gmsh.model.mesh.field.add("Min", 10)
+    gmsh.model.mesh.field.setNumbers(10, "FieldsList", [2, 4, ])
+    gmsh.model.mesh.field.setAsBackgroundMesh(10)
 
     # As we define the entire element size in our background mesh, we disable
     # certain on-by-default mesh calculations
@@ -662,24 +676,24 @@ def _format_constraints(constraints) -> list:
             constraints = new_constraints
     return constraints
 
-def _get_perpendicular(delta_x, delta_y) -> tuple[float, float]:
+def _get_perpendicular(delta_x, delta_y) -> 'tuple[float, float]':
     return -delta_y, delta_x
 
 def _get_extruded_points(
             base_point, normal_x, normal_y, cc_size
-        ) -> tuple[tuple[float, float], tuple[float, float]]:
+        ) -> 'tuple[tuple[float, float], tuple[float, float]]':
     # "Normalize" normal_x and normal_y, such that the length of the normal
     # vector = 1
     prev_length = sqrt(normal_x**2 + normal_y**2)
     normal_x = normal_x / prev_length
     normal_y = normal_y / prev_length
     extruded_above = (
-        base_point[0] + normal_x * cc_size**2 / 2,
-        base_point[1] + normal_y * cc_size**2 / 2
+        base_point[0] + normal_x * cc_size / 4,
+        base_point[1] + normal_y * cc_size / 4
     )
     extruded_below = (
-        base_point[0] - normal_x * cc_size**2 / 2,
-        base_point[1] - normal_y * cc_size**2 / 2
+        base_point[0] - normal_x * cc_size / 4,
+        base_point[1] - normal_y * cc_size / 4
     )
     return extruded_above, extruded_below
 
