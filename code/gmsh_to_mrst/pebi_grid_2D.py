@@ -23,8 +23,8 @@ import gmsh
 
 def pebi_grid_2D(
         cell_dimensions: float,
+        size: list,
         *,
-        size: list = None,
         face_constraints: Union[
                     'list[list[Iterable]]',
                     'dict[str, float]',
@@ -63,9 +63,8 @@ def pebi_grid_2D(
     Args:
         cell_dimensions (float): Base dimensions of each cell.
 
-        size (list, optional): Size of the domain, in the shape [xmax, ymax].
-            The domain always starts at [0, 0]. If None, size will be set to
-            [1, 1]. Defaults to None.
+        size (Iterable): Size of the domain, in the shape [xmax, ymax].
+            The domain always starts at [0, 0].
 
         face_constraints (list[Iterable] | dict[str, float] | dict[str, Iterable]
                 | dict[str, dict[str, float]] | dict[str, dict[str, Iterable]],
@@ -129,7 +128,7 @@ def pebi_grid_2D(
 
         face_intersection_factor (float, optional): The size of the cells close
             to intersections between face constraints, as compared to supplied
-            cell_dimensions. Cells within min_threshold_distance from an 
+            cell_dimensions. Cells within min_intersection_distance from an 
             intersection will have size face_intersection_factor * cell_dimensions.
             If None, no extra cell shaping will occur around intersections.
             The factor is also used in "breaks" of lines, i.e. if there is a
@@ -248,10 +247,12 @@ def pebi_grid_2D(
         run_frontend (bool, optional): Set to True in order to run the Gmsh
             frontend and show the created mesh. Defaults to False.
     """
+    if len(size) < 2:
+        raise ValueError(
+            f"Size must have length >= 2. Current length: {len(size)}"
+        )
     if face_constraints is None:
         face_constraints = []
-    if size is None:
-        size = [1, 1]
     if min_intersection_distance is None:
         min_intersection_distance = min_threshold_distance
     if max_intersection_distance is None:
