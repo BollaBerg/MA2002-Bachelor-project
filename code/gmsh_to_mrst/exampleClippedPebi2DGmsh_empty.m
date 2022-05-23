@@ -6,7 +6,7 @@ resGridSize = 0.1;
 domain = [1 1];
 
 % pebiGrid2DGmsh returns a single variable, G
-G = clippedPebi2DGmsh(resGridSize, domain, struct);
+G = clippedPebi2DGmsh(resGridSize, domain);
 
 % Plot result
 hold on;
