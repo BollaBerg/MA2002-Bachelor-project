@@ -12,7 +12,7 @@ function G = pebiGrid2DGmsh(resGridSize, size, varargin)
 %                   domain always starts at [0, 0].
 %
 % OPTIONAL PARAMETERS
-%   faceConstrants  - A struct of vectors. Each vector, size nf x 2, is the
+%   faceConstraints - A struct of vectors. Each vector, size nf x 2, is the
 %                   coordinates of a surface-trace. The surface is
 %                   assumed to be linear between the coordinates. The
 %                   function will place sites such that the surface is
@@ -47,7 +47,7 @@ function G = pebiGrid2DGmsh(resGridSize, size, varargin)
 %                   dimensions will start increasing. If missing, will use
 %                   min_threshold_distance. Defaults to missing.
 %
-%   max_intersection_distance - Float. Distance from intersections where
+%   maxIntersectionDistance - Float. Distance from intersections where
 %                   cell dimensions will be back to their default (max)
 %                   value, i.e. the supplied argument cell_dimensions. If
 %                   missing, will use min_threshold_distance. Defaults to
