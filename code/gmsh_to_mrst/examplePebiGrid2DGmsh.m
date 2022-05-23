@@ -1,6 +1,6 @@
 %% Example of pebiGrid2DGmsh usage
 % Create a simple 2D mesh using Gmsh, called from MATLAB
-
+clear all;
 % Setup required variables
 resGridSize = 0.2;
 domain = [1, 1];
