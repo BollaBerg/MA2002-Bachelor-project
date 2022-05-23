@@ -658,7 +658,7 @@ def _format_constraints(constraints) -> list:
             #   constraints.x = [x1 ...];
             #   constraints.y = [y1 ...];
             # Then constraints is a dict in the shape {x: array, y: array}
-            constraints = _check_array_dict_and_return_line_list(constraints)
+            constraints = [_check_array_dict_and_return_line_list(constraints)]
 
         elif isinstance(list(constraints.values())[0], dict):
             # If data is sent from MATLAB, then constraints is a dict of dicts
