@@ -15,7 +15,7 @@ import gmsh
 
 def pebi_grid_2D(
         cell_dimensions: float,
-        size: list,
+        shape: list,
         *,
         face_constraints: Union[
                     'list[list[Iterable]]',
@@ -55,8 +55,36 @@ def pebi_grid_2D(
     Args:
         cell_dimensions (float): Base dimensions of each cell.
 
-        size (Iterable): Size of the domain, in the shape [xmax, ymax].
-            The domain always starts at [0, 0].
+        shape (Iterable[float] | Iterable[Iterable[float]] | dict[str, float]):
+            Size or shape of the domain.
+            Legal forms:
+                Iterable[float]: Shape = (xmax, ymax), and is the size of a 
+                    domain starting at (0, 0). Shape must have length 2.
+                    Examples:
+                        >>> shape = [1, 1]
+                        >>> shape = (9001, 14)
+                Iterable[Iterable[float]]: Shape is a list of points making up
+                    the domain. All points in shape must be ordered either
+                    clockwise or counterclockwise, and all points in shape must
+                    have length >= 2 (only the first 2 elements are used).
+                    Examples:
+                        >>> shape = [
+                            (0, 0), (0.5, 0.2), (1, 0), (1, 1), (0, 1)
+                        ]
+                        >>> shape = [
+                            (0, 0), (1, 0), (1, 1), (0, 1)
+                        ]
+                dict[str, float]: Primarily used when complex domains are used
+                    in MATLAB. dict must have keys "x" and "y", where the 
+                    corresponding list being the x- and y-coordinates of the
+                    complex domain.
+                    Examples:
+                        >>> shape = {
+                                "x": [0, 0.5, 1, 1, 0],
+                                "y": [0, 0.2, 0, 1, 1]
+                            }
+                        >>> shape = {"x": [0, 1, 1, 0], "y": [0, 0, 1, 1]}
+            NOTE: Any constraints must be wholly within the supplied domain!
 
         face_constraints (list[Iterable] | dict[str, float] | dict[str, Iterable]
                 | dict[str, dict[str, float]] | dict[str, dict[str, Iterable]],
@@ -101,8 +129,7 @@ def pebi_grid_2D(
                             "keys dont matter": {"x": 0.1, "y": 0.9}.
                             2022: {"x": 0.9, "y": 0.1}
                         }
-            NOTE: Any constraints must be wholly within the supplied domain,
-            i.e. completely within the rectangle between [0, 0] and `size`!.
+            NOTE: Any constraints must be wholly within the supplied domain!
             If None, face_constraints will be an empty list. Defaults to None.
 
         face_constraint_factor (float, optional): The size of the cells close
@@ -183,8 +210,7 @@ def pebi_grid_2D(
                             "keys dont matter": {"x": 0.1, "y": 0.9}.
                             2022: {"x": 0.9, "y": 0.1}
                         }
-            NOTE: Any constraints must be wholly within the supplied domain,
-            i.e. completely within the rectangle between [0, 0] and `size`!.
+            NOTE: Any constraints must be wholly within the supplied domain!
             If None, cell_constraints will be an empty list. Defaults to None.
 
         cell_constraint_factor (float, optional): The size used for cells
@@ -239,10 +265,29 @@ def pebi_grid_2D(
         run_frontend (bool, optional): Set to True in order to run the Gmsh
             frontend and show the created mesh. Defaults to False.
     """
-    if len(size) < 2:
+    if isinstance(shape, array):
+        if len(shape) < 2:
+            raise ValueError(
+                f"Shape must have length >= 2. Current length: {len(shape)}"
+            )
+        elif len(shape) == 2:
+            # Shape is the size of the domain, starting at (0, 0)
+            shape = [
+                (0, 0), (0, shape[1]), (shape[0], shape[1]), (shape[0], 0)
+            ]
+    elif isinstance(shape, dict):
+        # Shape is a dict, likely from MATLAB
+        _assert_column_in_dict(shape, "x")
+        _assert_column_in_dict(shape, "y")
+        _assert_columns_have_same_length(shape, "x", "y")
+        shape = [
+            (x, y) for x, y in zip(shape.get("x"), shape.get("y"))
+        ]
+    else:
         raise ValueError(
-            f"Size must have length >= 2. Current length: {len(size)}"
+            f"Type {type(shape)} is not supported for argument `shape`!"
         )
+
     if face_constraints is None:
         face_constraints = []
     if min_intersection_distance is None:
@@ -309,18 +354,15 @@ def pebi_grid_2D(
 
     # Create corners
     corners = [
-        gmsh.model.geo.add_point(0, 0, 0),
-        gmsh.model.geo.add_point(0, size[1], 0),
-        gmsh.model.geo.add_point(size[0], size[1], 0),
-        gmsh.model.geo.add_point(size[0], 0, 0),
+        gmsh.model.geo.add_point(point[0], point[1], 0) for point in shape
     ]
 
     # Create circumference face_constraints
     circumference_face_constraints = [
-        gmsh.model.geo.add_line(corners[0], corners[1]),
-        gmsh.model.geo.add_line(corners[1], corners[2]),
-        gmsh.model.geo.add_line(corners[2], corners[3]),
-        gmsh.model.geo.add_line(corners[3], corners[0]),
+        gmsh.model.geo.add_line(corners[i], corners[i+1])
+            for i in range(len(corners) - 1)
+    ] + [
+        gmsh.model.geo.add_line(corners[-1], corners[0])
     ]
 
     # Create fractures (face constraints)
@@ -792,7 +834,9 @@ if __name__ == "__main__":
             [(0.1, 0.1)],
             [(0.5, 0.8), (0.6, 0.7), (0.7, 0.8), (0.9, 0.6)],
         ],
-        size=[1, 1],
+        shape=[
+            (0, 0), (0.5, 0.2), (1, 0), (1, 1), (0, 1)
+        ],
         face_constraint_factor = 1/3,
         face_intersection_factor = 1/9,
         mesh_algorithm="DelQuad",
