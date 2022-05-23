@@ -15,7 +15,7 @@ Output:
 """
 from array import array
 from itertools import combinations
-from math import atan2, sqrt
+from math import atan2, sqrt, ceil
 from typing import Any, Union, Iterable
 
 import gmsh
@@ -372,46 +372,66 @@ def pebi_grid_2D(
                 )
 
     # Create cell constraints
-    cc_loops = []
-    cc_point_surfaces = []
-    cc_line_surfaces = []
-    cc_point_size = cell_constraint_point_factor * cell_dimensions
-    cc_line_size = cell_constraint_line_factor * cell_dimensions
+    cc_loops = []               # Holds line loops - used when making surface
+    cc_point_surfaces = []      # Holds surfaces around CC points
+    cc_line_surfaces = []       # Holds surfaces around CC lines
+    cc_point_size = cell_constraint_point_factor * cell_dimensions  # Cell size around points
+    cc_line_size = cell_constraint_line_factor * cell_dimensions    # Cell size around lines
     for line in cell_constraints:
         if len(line) == 1:
             # line is a single point
             x, y = line[0][0], line[0][1]
+            # Create corners around the CC point - up, down, left and right
             surrounding_points = [
                 gmsh.model.geo.add_point(x - cc_point_size/2, y, 0),
                 gmsh.model.geo.add_point(x, y + cc_point_size/2, 0),
                 gmsh.model.geo.add_point(x + cc_point_size/2, y, 0),
                 gmsh.model.geo.add_point(x, y - cc_point_size/2, 0)
             ]
+            # Create lines surrounding the CC point, i.e. between surrounding
+            # points. These make up the mesh cell around the CC point
             surrounding_lines = [
                 gmsh.model.geo.add_line(surrounding_points[0], surrounding_points[1]),
                 gmsh.model.geo.add_line(surrounding_points[1], surrounding_points[2]),
                 gmsh.model.geo.add_line(surrounding_points[2], surrounding_points[3]),
                 gmsh.model.geo.add_line(surrounding_points[3], surrounding_points[0]),
             ]
+            # Save the curve loop created
             cc_loops.append(
                 gmsh.model.geo.add_curve_loop(surrounding_lines)
             )
+            # Save the surface created
             cc_point_surfaces.append(gmsh.model.geo.add_plane_surface([cc_loops[-1]]))
+            # Make each surrounding line into a transfinite curve with 2 points
+            # This creates a point in each corner, leading to a single cell
+            # within the surrounding lines - naturally with a face perfectly on
+            # the CC point
             for sur_line in surrounding_lines:
                 gmsh.model.geo.mesh.set_transfinite_curve(sur_line, 2)
+            # Make the surface a transfinite surface
             gmsh.model.geo.mesh.set_transfinite_surface(cc_point_surfaces[-1])
+            # Convert the (perfectly triangle) surface into a quadrangle one.
             gmsh.model.geo.mesh.set_recombine(2, cc_point_surfaces[-1])
         
         else:
             # line has at least 1 segment
             # We first handle the start, then all mid points, then the end
+            # Compute the normal vector of the line from start- to next point
             delta_x = line[1][0] - line[0][0]
             delta_y = line[1][1] - line[0][1]
             normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
+
+            # Create starting points, one along the normal vector and one
+            # opposite of the normal vector
             point_1, point_2 = _get_extruded_points(line[0], normal_x, normal_y, cc_line_size)
+            
+            # Create actual Gmsh points of the starting points
             start_1 = gmsh.model.geo.add_point(point_1[0], point_1[1], 0)
             start_2 = gmsh.model.geo.add_point(point_2[0], point_2[1], 0)
+            # Make a start line for the polygon surrounding our CC line
             start_line = gmsh.model.geo.add_line(start_1, start_2)
+            # Convert the start line into a transfinite curve. We again use 2
+            # transfinite points, leading to a width of 1 cell
             gmsh.model.geo.mesh.set_transfinite_curve(start_line, 2)
 
             # Handle all midpoints
@@ -422,70 +442,74 @@ def pebi_grid_2D(
                     0.5 * (line[i-1][0] + line[i+1][0]),
                     0.5 * (line[i-1][1] + line[i+1][1]),
                 )
-                mid_normal_x = line[i][0] - midpoint[0]
-                mid_normal_y = line[i][1] - midpoint[1]
-                if mid_normal_x == mid_normal_y == 0:
-                    mid_normal_x, mid_normal_y = normal_x, normal_y
+                normal_x = line[i][0] - midpoint[0]
+                normal_y = line[i][1] - midpoint[1]
+                # If the points are in a line, we simply use the normal vector
+                # from earlier
+                if normal_x == normal_y == 0:
+                    normal_x, normal_y = normal_x, normal_y
+                # Like for the start point, we create two extrusions - one 
+                # along the normal vector, and one opposite of it
                 end_point_1, end_point_2 = _get_extruded_points(
-                    line[i], mid_normal_x, mid_normal_y, cc_line_size
+                    line[i], normal_x, normal_y, cc_line_size
                 )
+                # If the line bends towards the right (creating an A-shape),
+                # then we must flip the points. This ensures that the start-
+                # and end points make a nice rectangle (compared to the twisted
+                # rectangle we'd get otherwise)
                 if _line_bends_towards_right(line[i-1], line[i], line[i+1]):
                     end_point_1, end_point_2 = end_point_2, end_point_1
                 
+                # Create actual Gmsh points of the extrusion points
                 end_1 = gmsh.model.geo.add_point(end_point_1[0], end_point_1[1], 0)
                 end_2 = gmsh.model.geo.add_point(end_point_2[0], end_point_2[1], 0)
-                parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
-                parallel_line_2 = gmsh.model.geo.add_line(end_2, start_1)
-                end_line = gmsh.model.geo.add_line(end_1, end_2)
-
-                cc_loops.append(
-                    gmsh.model.geo.add_curve_loop([
-                        start_line,
-                        parallel_line_1,
-                        end_line,
-                        parallel_line_2
-                    ])
+                
+                # Compute the transfinite points of the parallel lines
+                # We use the line from start_2 -> end_1 as our measuring stick, as
+                # the difference between the parallel lines is likely very small
+                distance = _distance(line[i-1], line[i])
+                parallel_line_points = _calculate_parallel_transfinite_points(
+                    distance, cc_line_size
                 )
-                cc_line_surfaces.append(
-                    gmsh.model.geo.add_plane_surface([cc_loops[-1]])
-                )
-                gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
-                gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
-                gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
-                gmsh.model.geo.mesh.set_transfinite_surface(cc_line_surfaces[-1])
-                gmsh.model.geo.mesh.set_recombine(2, cc_line_surfaces[-1])
 
+                end_line = _create_transfinite_cc_box(
+                    start_1, start_2, start_line,
+                    end_1, end_2,
+                    cc_loops, cc_line_surfaces, parallel_line_points
+                )
+
+                # Convert the previous end line to a new start line
+                # Note the flip (end_2 -> start_1 and vice versa)
+                # This ensures we get neat rectangles for each line segment
                 start_1, start_2 = end_2, end_1
                 start_line = -end_line
             
             # Handle the end point
+            # Same as for the start point - compute the normal vector
             delta_x = line[-1][0] - line[-2][0]
             delta_y = line[-1][1] - line[-2][1]
             normal_x, normal_y = _get_perpendicular(delta_x, delta_y)
+            # Use the normal vector to get extrusion points
             end_point_2, end_point_1 = _get_extruded_points(line[-1], normal_x, normal_y, cc_line_size)
+
+            # Create actual Gmsh points from the extrusion points
             end_1 = gmsh.model.geo.add_point(end_point_1[0], end_point_1[1], 0)
             end_2 = gmsh.model.geo.add_point(end_point_2[0], end_point_2[1], 0)
-            parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
-            parallel_line_2 = gmsh.model.geo.add_line(end_2, start_1)
-            end_line = gmsh.model.geo.add_line(end_1, end_2)
-            cc_loops.append(
-                gmsh.model.geo.add_curve_loop([
-                    start_line,
-                    parallel_line_1,
-                    end_line,
-                    parallel_line_2
-                ])
-            )
-            cc_line_surfaces.append(
-                gmsh.model.geo.add_plane_surface([cc_loops[-1]])
-            )
-            gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
-            gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, 10)
-            gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, 10)
-            gmsh.model.geo.mesh.set_transfinite_surface(cc_line_surfaces[-1])
-            gmsh.model.geo.mesh.set_recombine(2, cc_line_surfaces[-1])
-                
 
+            # Compute the transfinite points of the parallel lines
+            # We use the line from start_2 -> end_1 as our measuring stick, as
+            # the difference between the parallel lines is likely very small
+            distance = sqrt(delta_x**2 + delta_y**2)
+            parallel_line_points = _calculate_parallel_transfinite_points(
+                distance, cc_line_size
+            )
+
+            # Create a transfinite surface out of the created CC box
+            _create_transfinite_cc_box(
+                start_1, start_2, start_line,
+                end_1, end_2,
+                cc_loops, cc_line_surfaces, parallel_line_points
+            )
 
     # Create curve loop of circumference
     circumference = gmsh.model.geo.add_curve_loop(circumference_face_constraints)
@@ -706,6 +730,59 @@ def _line_bends_towards_right(start_point, mid_point, end_point) -> bool:
         end_point[1] - start_point[1], end_point[0] - start_point[0]
     )
     return angle_start_mid > angle_start_end
+
+def _create_transfinite_cc_box(
+        start_1,
+        start_2,
+        start_line,
+        end_1,
+        end_2,
+        cc_loops: list,
+        cc_line_surfaces: list,
+        parallel_line_points: int
+    ) -> int:
+    """Create a transfinite box from the supplied points
+    
+    Add the curve loop to cc_loops, and the surface to cc_line_surfaces.
+
+    Return end_line
+    """
+    # Create the parallel lines of the box surrounding the CC line
+    parallel_line_1 = gmsh.model.geo.add_line(start_2, end_1)
+    parallel_line_2 = gmsh.model.geo.add_line(end_2, start_1)
+    # Create the end line
+    end_line = gmsh.model.geo.add_line(end_1, end_2)
+
+    # Save the curve loop, for use when creating the base surface
+    curve_loop = gmsh.model.geo.add_curve_loop([
+        start_line,
+        parallel_line_1,
+        end_line,
+        parallel_line_2
+    ])
+    cc_loops.append(curve_loop)
+
+    # And save the actual surface created
+    surface = gmsh.model.geo.add_plane_surface([curve_loop])
+    cc_line_surfaces.append(surface)
+
+    # Create a transfinite surface out of the surface we made from
+    # the box surrounding the CC line
+    # End line always has 2 transfinite points, to get nice single-width cells
+    gmsh.model.geo.mesh.set_transfinite_curve(end_line, 2)
+    gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_1, parallel_line_points)
+    gmsh.model.geo.mesh.set_transfinite_curve(parallel_line_2, parallel_line_points)
+    gmsh.model.geo.mesh.set_transfinite_surface(surface)
+    gmsh.model.geo.mesh.set_recombine(2, surface)
+
+    return end_line
+
+def _distance(point_1, point_2) -> float:
+    """Compute the distance between two points, using Euclidean distance"""
+    return sqrt((point_2[1] - point_1[1])**2 + (point_2[0] - point_1[0])**2)
+
+def _calculate_parallel_transfinite_points(distance, cc_line_size):
+    return ceil(distance / cc_line_size) + 1
 
 ############################## END OF HELPERS ##############################
 
