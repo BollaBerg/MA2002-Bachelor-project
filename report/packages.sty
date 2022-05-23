@@ -1,4 +1,6 @@
 % OWN STUFF
+% Fix minted error arising from having the report in its own subdirectory (not in the main directory) of the project. THIS IS ONLY NECESSARY FOR OVERLEAF, and should be removed if compiling the file locally
+\usepackage[outputdir=../]{minted}
 
 % Remove section numbering in front matter
 % This is, honestly, simpler than trying to redefine \frontmatter and \mainmatter

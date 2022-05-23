@@ -2,19 +2,51 @@
 \label{sec:combining}
 
 \subsection{\texttt{GmshToMRST}}
+% MATLAB interface for importing Gmsh
+% Creates satisfactory MRST grids
+% Requires running Gmsh manually
 
 \subsection{\texttt{gmsh2MRST}}
+% To handle this ...
+% Automatically create Gmsh-meshes from MATLAB
+% Abstract most of the heavy lifting
 
 \subsubsection{Features}
+% Robust Gmsh meshing
+% Complex domains
+% Very flexible, many user-settable arguments
+% Handles face- and cell constraints
+% Can run all meshing- and recombination algorithms Gmsh offer
 
 \subsubsection{Python interface}
+% Something about how the Python interface is implemented, how it can be used
 
 \subsubsection{MATLAB interface}
+% Something about how the MATLAB interface is implemented, how it can be used
 
 \subsubsection{\texttt{pebiGrid2DGmsh}}
+% Base method
+% Simply create a Gmsh grid, then load it usin GmshToMRST
 
 \subsubsection{\texttt{clippedPebiGrid2DGmsh}}
+% Uses duality of Delaunay and PEBI. Uses the PEBI output from pebiGrid2DGmsh as input to clippedPebiGrid2D. Swaps face- and cell constraints.
+% Experimental, limited results, but nicer grids
+% Less flexible due to constraint swapping
+% Not in Python
 
 \subsubsection{Arguments and defaults}
+% Table of arguments
+% Python  |  MATLAB  |  Explanation?  |  Default value
 
 \subsubsection{Limitations}
+% clippedPebiGrid2DGmsh slow for multiple cell constraints
+% Fiddling required to get non-triangular grids (which is Gmsh's default)
+% Highly structured cell constraints - may be cases where this is suboptimal
+% Face- and cell constraints can NOT cross each other, mesh will not compile!
+% Struggles somewhat with crossing face constraints - inaccurate where they overlap
+
+% Likely from GmshToMRST
+\begin{minted}[frame=single]{text}
+Warning: No field 'faces.neighbors' found. Adding plausible values..
+proceed with caution! 
+\end{minted}
