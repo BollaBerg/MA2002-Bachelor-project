@@ -2,16 +2,8 @@
 Create a very simple GMSH plot, using user-supplied arguments, then save the
 mesh to file.
 
-Arguments:
-    - cell dimensions: Tuple with len = 2. Basic cell size
-        NOT CURRENTLY IMPLEMENTED!
-    - size: Tuple with len = 2. Max size of the mesh (starts at (0, 0))
-    - face_constraints: Iterable of face_constraints. Each element of face_constraints should be an iterable of
-        points on the line (i.e. start/end/corners). Equivalent to
-        'faceConstraints' in pebiGrid2D in UPR.
-
-Output:
-    - Gmsh mesh saved to file TEMP_Gmsh_MRST.m`
+Functions:
+    pebi_grid_2D
 """
 from array import array
 from itertools import combinations
