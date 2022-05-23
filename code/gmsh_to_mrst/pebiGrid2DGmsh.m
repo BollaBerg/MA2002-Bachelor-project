@@ -7,9 +7,12 @@ function G = pebiGrid2DGmsh(resGridSize, size, varargin)
 % ARGUMENTS
 %   resGridSize     - Size of the reservoir grid cells, in units of meters.
 %
-%   size            - Vector, length 2, [xmax, ymax], of physical size in
-%                   units of meters of the computational domain. The
-%                   domain always starts at [0, 0].
+%   shape           - Vector, length 2, [xmax, ymax], of physical size in
+%                   units of meters of the computational domain OR
+%                   - k x 2 array of coordinates. Each coordinate
+%                   corresponds to a vertex in the polygon boundary. The
+%                   coordinates must be ordered clockwise or counter
+%                   clockwise. 
 %
 % OPTIONAL PARAMETERS
 %   faceConstraints - A struct of vectors. Each vector, size nf x 2, is the
@@ -204,10 +207,15 @@ cellConstraints = p.Results.cellConstraints;
 if iscell(cellConstraints)
     cellConstraints = constraintCellArrayToStruct(cellConstraints);
 end
+% Handle shape, to enable polygon shape
+shape = p.Results.size;
+if length(shape) > 2
+    shape = shapeArrayToStruct(shape);
+end
 
 py.gmsh2mrst.pebi_grid_2D( ...
     cell_dimensions = p.Results.resGridSize, ...
-    size = py.list(p.Results.size), ...
+    shape = shape, ...
     face_constraints = faceConstraints, ...
     face_constraint_factor = p.Results.faceConstraintFactor, ...
     min_threshold_distance = p.Results.minThresholdDistance, ...
@@ -245,4 +253,10 @@ function constraintStruct = constraintCellArrayToStruct(constraints)
         constraintStruct.(rowChar).x = constraints{row}(:, 1);
         constraintStruct.(rowChar).y = constraints{row}(:, 2);
     end
+end
+
+function shapeStruct = shapeArrayToStruct(shape)
+    shapeStruct = struct;
+    shapeStruct.x = shape(:, 1);
+    shapeStruct.y = shape(:, 2);
 end
