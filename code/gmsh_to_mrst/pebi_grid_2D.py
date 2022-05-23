@@ -499,7 +499,7 @@ def pebi_grid_2D(
             # Compute the transfinite points of the parallel lines
             # We use the line from start_2 -> end_1 as our measuring stick, as
             # the difference between the parallel lines is likely very small
-            distance = sqrt(delta_x**2 + delta_y**2)
+            distance = _distance(line[-1], line[-2])
             parallel_line_points = _calculate_parallel_transfinite_points(
                 distance, cc_line_size
             )
@@ -792,13 +792,13 @@ if __name__ == "__main__":
     pebi_grid_2D(
         0.2, 
         face_constraints=[
-            [(0.25, 0.25), (0.4, 0.5), (0.75, 0.75)],
+            [(0.25, 0.25), (0.4, 0.5), (0.7, 0.7)],
             [(0.8, 0.1), (0.9, 0.2)],
             [(0.2, 0.9), (0.9, 0.1)]
         ],
         cell_constraints=[
             [(0.1, 0.1)],
-            [(0.5, 0.8), (0.6, 0.7), (0.7, 0.8), (0.9, 0.8)],
+            [(0.5, 0.8), (0.6, 0.7), (0.7, 0.8), (0.9, 0.6)],
         ],
         size=[1, 1],
         face_constraint_factor = 1/3,
