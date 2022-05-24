@@ -223,7 +223,7 @@ The same holds true in $\mathbb{R}^3$, where four sites have a 0-dimensional fac
 Dualities are two objects that have a one-to-one relationship, and can be translated back and forth.
 \end{definition}
 
-Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the same point set. Then each node in $T$ is associated with a cell in $V$, and vice versa \cite{UPR_chapter}. More specifically, the center of the circumcircles used to prove $T$ is Delaunay is a vertex in the Voronoi diagram, and if there is an edge in $T$ between two sites, then the sites share a face in $V$ \cite{UPR_chapter}. This is illustrated in \autoref{fig:ex:voronoi}, where the sites are marked by blue dots and the circumcircles of the Delaunay triangulation are marked by red dots.
+Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the same point set. Then each node in $T$ is associated with a cell in $V$, and vice versa \cite{UPR_chapter}. More specifically, the center of the circumcircles used to prove $T$ is Delaunay is a vertex in the Voronoi diagram, and if there is an edge in $T$ between two sites, then the sites share a face in $V$ \cite{UPR_chapter}. This is illustrated in \autoref{fig:ex:voronoi}, where the sites are marked by blue dots and the circumcenters of the Delaunay triangulation are marked by red dots.
 
 
 \begin{figure}[ht]
@@ -254,8 +254,77 @@ Let $P$ be a point set in a limited domain $\mathcal{D} \subset \mathbb{R}^n$. W
 \end{equation}
 \end{definition}
 
-While the there is little difference between clipped and unclipped Voronoi diagrams, the option of limiting the domain is beneficial for simulations and computer representation.
+While there is little difference between clipped and unclipped Voronoi diagrams, the option of limiting the domain is beneficial for simulations and computer representation.
 
+The properties of a Voronoi diagram depends on the distribution of its sites. One especially interesting case happens when the cites and centers of each cell align. We use the mass center of the Voronoi cells to calculate this. The mass center of a Voronoi cell is given by \textcite{UPR_thesis} as
+\begin{equation}
+    \mathbf{c}_{p_i} = \frac
+        {\int_{V_{p_i}} \mathbf{y} \rho(\mathbf{y}) d\mathbf{y}}
+        {\int_{V_{p_i}} \rho(\mathbf{y}) d\mathbf{y}},
+\end{equation}
+where $V_{p_i}$ is the volume of the cell and $\rho(\mathbf{y})$ is a given mass density function of the cell. If the mass centers and sites in a Voronoi diagram line up, we have a special subset of Voronoi diagrams called a \emph{centroidal Voronoi diagram (CVD)}.
+
+\begin{definition}[Centroidal Voronoi diagram]
+Let $P$ be a set of sites in a Voronoi diagram $\mathcal{V}$. $\mathcal{V}$ is a \emph{centroidal Voronoi diagram} if $\mathbf{c}_{p_i} = p_i$ for all $p_i \in P$.
+\end{definition}
+
+As a result of this alignment, centroidal Voronoi diagrams typically have highly regular and evenly sized cells, which is why they are often called \emph{optimal Voronoi diagrams} \cite{UPR_thesis}. This property is shown in \autoref{fig:CVD_comparison}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/voronoi/centroidal_voronoi_diagram_0.png}
+        \caption{Randomly generated Voronoi diagram}
+        \label{fig:notCVD}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.4\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/voronoi/centroidal_voronoi_diagram.png}
+        \caption{Centroidal Voronoi diagram}
+        \label{fig:CVD}
+    \end{subfigure}
+    \caption{Comparison of centroidal and non-centroidal Voronoi diagrams}
+    \label{fig:CVD_comparison}
+\end{figure}
+
+Several methods for generating CVDs exist, and one of the simplest is by using fixed-point iteration. The method, called Lloyd's method, is shown in algorithm \ref{alg:fixed_point}.
+
+\begin{pseudocode}[label=alg:fixed_point]{Lloyd's method}
+    Make an initial set of sites
+    Until convergence:
+        Construct Voronoi diagram of sites
+        Compute centroids of the Voronoi diagram
+        Use the centroids as new sites
+\end{pseudocode}
+
+While this method is simple and easy to implement, its linear convergence limits its usability. A quasi-Newton method is introduced by \textcite{CVDmethods}, using the CVD energy function given by
+\begin{equation}
+    F(x) = \sum_{i=1}^m \int_{V_{p_i}} \rho(\mathbf{y}) \abs{\mathbf{y} - c_i}^2 d\mathbf{y},
+\end{equation}
+which is minimized when $p_i = c_i$. This method is both faster and more robust than Lloyd's method \cite{CVDmethods}.
+
+Another method for generating nice Voronoi diagrams is by exploiting the duality between Delaunay triangulations and Voronoi diagrams and using a force based algorithm. The Optimal Delaunay triangulation, introduced by \textcite{Delaunay_force_optimizing}, associates each Delaunay vertex with a joint and each edge with a compressable spring. By defining an element size function $h(x, y)$, we attain the uncompressed length of the springs. We then let the forces follow Hooke's law, but only for repulsive forces, i.e the force $f$ from a spring with length $l$ and uncompressed length $l_0$ is given by
+\begin{equation}
+    \label{eq:delaunay_force}
+    f(l, l_0) = \begin{cases}
+        l_0 - l, & l < l_0, \\
+        0, & l \ge l_0.
+    \end{cases}
+\end{equation}
+
+The total force on a point, $F(p_i)$, is simply the sum of the force from all springs connected to $p_i$. We have two special types of points to consider. Points along the border must avoid getting pushed out of the domain. To do so, we add an external force perpendicular to the border pointing inwards, balancing the internal forces. We can also have fixed joints. These are simply not allowed to move, no matter the applied force. The optimization loop, then, is simple:
+
+\begin{pseudocode}[label=alg:delaunay_force]{Optimal Delaunay triangulation}
+    Make an initial set of sites
+    Until convergence:
+        Calculate Delaunay triangulation of sites
+        For each edge in the triangulation:
+            Calculate force of the associated spring
+        For each non-fixed vertex in the triangulation:
+            Calculate the sum of forces on the vertex, including external forces
+            Move vertex a set step length along the sum of forces
+\end{pseudocode}
 
 \subsubsection{PEBI grids}
 Several meshing-related sources, including \cite{UPR_chapter} and \cite{UPR_thesis}, operate with what they call \emph{PEBI grids} - PErpendicular BIsector grids. \textcite{UPR_thesis} operates with the following definition:
@@ -269,7 +338,7 @@ Let $P$ be a finite point set, $P \in \mathbb{R}^n$, and let $\mathcal{B}$ be th
 \end{enumerate}
 $b_{p_i}$ is then the intersection of all these subspaces, i.e.
 \begin{equation}
-    b_{p_i} = \bigcup_{p_j \in P \setminus p_i} H(p_i, p_j)
+    b_{p_i} = \bigcap_{p_j \in P \setminus p_i} H(p_i, p_j)
 \end{equation}
 \end{definition}
 

@@ -2,6 +2,69 @@
 % Fix minted error arising from having the report in its own subdirectory (not in the main directory) of the project. THIS IS ONLY NECESSARY FOR OVERLEAF, and should be removed if compiling the file locally
 \usepackage[outputdir=../]{minted}
 
+% Set some minted defaults
+\setminted{%
+    fontsize=\small,
+    numbersep=3mm,
+    autogobble=true,
+}
+
+% Setup code boxes
+\usepackage[minted,skins]{tcolorbox}
+\newtcblisting[auto counter, list inside=code]{python}[2][]{%
+  listing engine=minted,
+  colback=orange!3!white,
+  colframe=black!50,
+  listing only,
+  minted style=tango,
+  minted language=python,
+  title={Python \thetcbcounter: #2},
+  list entry={Python \thetcbcounter: #2},
+  minted options={linenos=false},
+  #1,
+}
+\newtcblisting[auto counter, list inside=code]{matlab}[2][]{%
+  listing engine=minted,
+  colback=blue!3!white,
+  colframe=black!50,
+  listing only,
+  minted style=tango,
+  minted language=matlab,
+  title={MATLAB \thetcbcounter: #2},
+  list entry={MATLAB \thetcbcounter: #2},
+  minted options={linenos=false},
+  #1,
+}
+\newtcblisting[auto counter, list inside=algorithms]{pseudocode}[2][]{%
+  listing engine=minted,
+  colback=black!3!white,
+  colframe=black!50,
+  listing only,
+  minted style=tango,
+  minted language=text,
+  title={Algorithm \thetcbcounter: #2},
+  list entry={Algorithm \thetcbcounter: #2},
+  minted options={linenos,breaklines,breaksymbolleft=},
+  enhanced,
+  overlay={\begin{tcbclipinterior}\fill[black!25] (frame.south west)
+        rectangle ([xshift=4.5mm]frame.north west);\end{tcbclipinterior}},
+  #1
+}
+\newtcblisting{codeError}[1][]{%
+  listing engine=minted,
+  coltext=red,
+  colback=red!5!white,
+  colframe=black!50,
+  listing only,
+  minted style=tango,
+  minted language=text,
+  minted options={
+    breaklines, breaksymbolleft=\quad,#1},
+}
+
+% Setup list of listings
+\renewcommand\listoflistingscaption{List of Code Segments}
+
 % Remove section numbering in front matter
 % This is, honestly, simpler than trying to redefine \frontmatter and \mainmatter
 \newcommand{\ownfrontmatter}[0]{
