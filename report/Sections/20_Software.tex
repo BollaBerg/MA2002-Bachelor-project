@@ -3,13 +3,36 @@ As there exists a vast range of solutions for creating grids to represent real d
 
 \subsection{MRST}
 \label{sec:MRST}
+The MATLAB Reservoir Simulation Toolbox - MRST - is an open-source toolbox for studying reservoirs, developed by SINTEF. Originally aimed at the study of discretization and flow solvers, the project has since expanded, and currently offers much of the same functionality that can be found in commercial reservoir simulators \cite{MRST_book}. Its main target is still research, with the primary focus being on rapidly developing and demonstrating contemporary methods and concepts \cite{MRST_website}.
+
+In order to keep its extensive set of features maintainable, MRST is organized with a set of core functionality, as well as several optional add-on modules \cite{MRST_book}. The core includes methods for handling grids, data and basic mechanisms such as gravity, sources and wells, as well as an implementation of automatic differentiation. The add-on modules includes tools for discretization, solvers for incompressible flow, simulators based on automatic differentiation, specialized computational methods aimed at solving concrete problems, several utility modules, as well as tools that can be used to aid the modeling of the reservoirs. The latter groups contains the UPR module.
 
 
 \subsubsection{The UPR Module}
 \label{sec:UPR}
+Unstructured PEBI-grids for Reservoirs - UPR - was developed by \textcite{UPR_thesis}, as part of his 2016 Master thesis. The module is designed to generate PEBI grids conforming to wells - represented by cell centroids, and faults - represented by edges, and can handle several challenging cases, such as multiple faults intersecting, intersections at sharp angles and intersections between wells and faults. The module also contain methods to generate such grids in three dimensions.
+
+% Explain/show how UPR calculates well and fault sites
+% Show examples
+
+A generalized overview of UPR's algorithm for unstructured gridding \cite[pp. 51]{UPR_thesis} is shown in Algorithm \ref{alg:UPR_unstructured}.
+\begin{pseudocode}[label=alg:UPR_unstructured]{UPR Unstructured Gridding}
+Create faults and wells
+    Place a set of well sites along each well path, according to the well cell density function
+    Place a set of circles centered along the faults according to the fault cell density function. Place fault sites at circle intersections
+    If two or more wells intersect:
+        Place a well site at the intersection
+    If two or more faults intersect:
+        Place a circle at the intersection. Places fault sites at circle intersections as before
+    If a well and a fault intersect:
+        Place a circle on each side of the intersection, half a step away. The two sites created by these circles are considered well sites.
+Create a set of reservoir sites in the domain
+Create other sites, such as refinements
+Remove all reservoir sites that violate fault or well condition
+Remove all reservoir sites closer to a fault or well site than their respective minimum grid size.
+\end{pseudocode}
 
 \subsubsection{Distmesh}
-
 
 \subsection{Gmsh}
 \label{sec:Gmsh}

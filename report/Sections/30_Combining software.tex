@@ -10,6 +10,9 @@
 % To handle this ...
 % Automatically create Gmsh-meshes from MATLAB
 % Abstract most of the heavy lifting
+% Work as an example of how to generate meshes in Gmsh
+
+\subsubsection{Installation}
 
 \subsubsection{Features}
 % Robust Gmsh meshing
@@ -38,15 +41,24 @@
 % Table of arguments
 % Python  |  MATLAB  |  Explanation?  |  Default value
 
+\subsubsection{Implementations}
+% Deep-dive into the mechanics of gmsh4MRST
+% How the different features are implemented, concretely
+% Discuss Fields, constraint implementation (especially cell constraints), etc.
+% Perhaps discuss Gmsh meshing and recombination algorithms
+% Argument handling, how it handles arguments in several different formats
+
 \subsubsection{Limitations}
 % clippedPebiGrid2DGmsh slow for multiple cell constraints
 % Fiddling required to get non-triangular grids (which is Gmsh's default)
 % Highly structured cell constraints - may be cases where this is suboptimal
 % Face- and cell constraints can NOT cross each other, mesh will not compile!
 % Struggles somewhat with crossing face constraints - inaccurate where they overlap
+% API compitability (same arguments) as UPR's pebiGrid2D
+% Gmsh outputs Delaunay triangulation, resulting in "sharper" cells. When converting these to Voronoi, data is lost about the edges of the cells, resulting in loss-of-accuracy regarding constraints (especially face constraints)
+% Does not compute centroidal voronoi diagrams -> suboptimal distribution of centers?
 
 % Likely from GmshToMRST
-\begin{minted}[frame=single]{text}
-Warning: No field 'faces.neighbors' found. Adding plausible values..
-proceed with caution! 
-\end{minted}
+\begin{codeError}
+Warning: No field 'faces.neighbors' found. Adding plausible values... proceed with caution! 
+\end{codeError}
