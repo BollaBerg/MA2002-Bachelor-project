@@ -13,6 +13,8 @@
 % Work as an example of how to generate meshes in Gmsh
 
 \subsubsection{Installation}
+% PyPi
+% MATLAB files in MATLAB PATH
 
 \subsubsection{Features}
 % Robust Gmsh meshing
@@ -55,7 +57,6 @@
 % Face- and cell constraints can NOT cross each other, mesh will not compile!
 % Struggles somewhat with crossing face constraints - inaccurate where they overlap
 % API compitability (same arguments) as UPR's pebiGrid2D
-% Gmsh outputs Delaunay triangulation, resulting in "sharper" cells. When converting these to Voronoi, data is lost about the edges of the cells, resulting in loss-of-accuracy regarding constraints (especially face constraints)
 % Does not compute centroidal voronoi diagrams -> suboptimal distribution of centers?
 
 % Likely from GmshToMRST
