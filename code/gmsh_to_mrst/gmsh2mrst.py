@@ -265,7 +265,7 @@ def pebi_grid_2D(
         run_frontend (bool, optional): Set to True in order to run the Gmsh
             frontend and show the created mesh. Defaults to False.
     """
-    if isinstance(shape, array):
+    if isinstance(shape, Iterable):
         if len(shape) < 2:
             raise ValueError(
                 f"Shape must have length >= 2. Current length: {len(shape)}"
