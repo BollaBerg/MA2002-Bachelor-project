@@ -10,9 +10,22 @@
 }
 
 % Setup code boxes
-\usepackage[minted,skins]{tcolorbox}
+\usepackage[minted,skins,breakable]{tcolorbox}
 \newtcblisting[auto counter, list inside=code]{python}[2][]{%
   listing engine=minted,
+  colback=orange!3!white,
+  colframe=black!50,
+  listing only,
+  minted style=tango,
+  minted language=python,
+  title={Python \thetcbcounter: #2},
+  list entry={Python \thetcbcounter: #2},
+  minted options={linenos=false},
+  #1,
+}
+\newtcbinputlisting[auto counter, list inside=code, use counter from=python]{pythonInput}[3][]{%
+  listing engine=minted,
+  listing file=#3,
   colback=orange!3!white,
   colframe=black!50,
   listing only,
