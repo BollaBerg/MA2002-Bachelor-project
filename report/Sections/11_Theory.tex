@@ -5,7 +5,7 @@ To produce and use grid representations of the real world, there must be a way t
 \begin{definition}[Point set]
 A point set $P \in \mathbb{R}^n$ is a finite set of points in $\mathbb{R}^n$.
 \end{definition}
-While there exists infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. In order to encode more data in the discrete representation, points in a point set can be grouped in simplices. This enables the inclusion of data about physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations. Using simplices to represent a domain allows us to reduce the amount of data necessary for representing a domain with physical features, compared to using a large point set to represent the domain.
+While there exists infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. In order to encode more data in the discrete representation, points in a point set can be grouped into simplices. This enables the inclusion of data about physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations. Using simplices to represent a domain allows us to reduce the amount of data necessary for representing a domain with physical features, compared to using a large point set to represent the domain.
 
 
 \begin{definition}[Simplex]
@@ -93,11 +93,11 @@ A triangulation $T$ of a point set $P$ is the set of simplices $T$ such that
     \label{fig:ex:triangulation}
 \end{figure}
 
-For a given point set, one can generally create multiple legal triangulations. \autoref{fig:ex:triangulation} shows two triangulations for the same point set $P$.
+For a given point set, one can generally create multiple valid triangulations. \autoref{fig:ex:triangulation} shows two triangulations for the same point set $P$.
 
 
 \subsection{Delaunay triangulation}
-Delaunay triangulation is a triangulation first introduced by \textcite{delaunay_1943} in 1943. Delaunay triangulations maximize the smallest angle of the simplices in the triangulation, and therefore produce representations that work nicely in grid-based applications. The Delaunay triangulation of a point set $P$ is defined as follows:
+Delaunay triangulations was first introduced by \textcite{delaunay_1943} in 1943. Delaunay triangulations maximize the smallest angle of the simplices in the triangulation, and therefore produce representations that work nicely in grid-based applications. The Delaunay triangulation of a point set $P$ is defined as follows:
 \begin{definition}
 \label{def:delaunay}
 Let $T$ be a triangulation of the point set $P$. $T$ is a Delaunay triangulation if no vertices in $P$ are inside the \emph{circumcircle} of any simplex in $T$.
@@ -128,7 +128,7 @@ A circumcircle of a polygon is a circle passing through all vertices of the poly
 
 In \autoref{fig:circumcircles-delaunay}, no vertices of $P$ are inside any of the plotted circumcircles. This shows that the triangulation in \autoref{fig:triangulation-delaunay} is a Delaunay triangulation. In \autoref{fig:circumcircles-random}, two vertices are inside each of the two large circumcircles created from the centermost, narrow triangles. This shows that the triangulation in \autoref{fig:triangulation-random} is not Delaunay.
 
-Delaunay triangulations are unique as long as at most three vertices are on the same circumcircle \cite[Theorem 2.1]{UPR_thesis}. In cases where this is not true, such as where four vertices make up a cyclic quadrilateral, there exist several legal Delaunay triangulations for the same point set $P$. This is illustrated in \autoref{fig:non-unique-delaunay}, where the two center vertices make up cyclic quadrilaterals with both the top and bottom pair of vertices. This enables four legal Delaunay triangulations of the point set.
+Delaunay triangulations are unique as long as at most three vertices are on the same circumcircle \cite[Theorem 2.1]{UPR_thesis}. In cases where this is not true, such as where four vertices make up a cyclic quadrilateral, there exist several valid Delaunay triangulations for the same point set $P$. This is illustrated in \autoref{fig:non-unique-delaunay}, where the two center vertices make up cyclic quadrilaterals with both the top and bottom pair of vertices. This enables four legal Delaunay triangulations of the point set.
 
 \begin{figure}[ht]
     \centering
@@ -155,7 +155,7 @@ Delaunay triangulations are unique as long as at most three vertices are on the 
         \includegraphics[width=\textwidth]{report/Images/Theory/triangulation/triangulation_delaunay4.png}
         \label{fig:triangulation-delaunay4}
     \end{subfigure}
-    \caption[Non-uniqueness of Delaunay triangulations]{Non-uniqueness of Delaunay triangulations. Two cyclic quadrilaterals enables four legal Delaunay triangulations.}
+    \caption[Non-uniqueness of Delaunay triangulations]{Non-uniqueness of Delaunay triangulations. Two cyclic quadrilaterals enables four valid Delaunay triangulations.}
     \label{fig:non-unique-delaunay}
 \end{figure}
 
@@ -227,7 +227,7 @@ The same holds true in $\mathbb{R}^3$, where four sites have a 0-dimensional fac
 Dualities are two objects that have a one-to-one relationship, and can be translated back and forth.
 \end{definition}
 
-Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the same point set. Then each node in $T$ is associated with a cell in $V$, and vice versa \cite{UPR_chapter}. More specifically, the center of the circumcircles used to prove $T$ is Delaunay is a vertex in the Voronoi diagram, and if there is an edge in $T$ between two sites, then the sites share a face in $V$ \cite{UPR_chapter}. This is illustrated in \autoref{fig:ex:voronoi}, where the sites are marked by blue dots and the circumcenters of the Delaunay triangulation are marked by red dots.
+Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the same point set. Then each node in $T$ is associated with a cell in $V$, and vice versa \cite{UPR_chapter}. More specifically, the center of the circumcircles used to prove $T$ is Delaunay is a vertex in the Voronoi diagram, and if there is an edge in $T$ between two sites, then the sites share a face in $V$ \cite{UPR_chapter}. Likewise, the sites in the Voronoi diagram are vertices in the Delaunay triangulation. This is illustrated in \autoref{fig:ex:voronoi}, where the sites are marked by blue dots and the circumcenters of the Delaunay triangulation are marked by red dots.
 
 
 \begin{figure}[ht]
@@ -313,7 +313,7 @@ which is minimized when $p_i = c_i$. This method is both faster and more robust 
 
 \subsubsection{Optimal Delaunay triangulation}
 \label{sec:optimal-delaunay}
-Another method for generating nice Voronoi diagrams is by exploiting the duality between Delaunay triangulations and Voronoi diagrams and using a force based algorithm. The Optimal Delaunay triangulation, introduced by \textcite{Delaunay_force_optimizing}, associates each Delaunay vertex with a joint and each edge with a compressable spring. By defining an element size function $h(x, y)$, we attain the uncompressed length of the springs. We then let the forces follow Hooke's law, but only for repulsive forces, i.e the force $f$ from a spring with length $l$ and uncompressed length $l_0$ is given by
+Another method for generating nice Voronoi diagrams is by exploiting the duality between Delaunay triangulations and Voronoi diagrams and using a force based algorithm. The Optimal Delaunay triangulation, introduced by \textcite{Delaunay_force_optimizing}, associates each Delaunay vertex with a joint and each edge with a spring. By defining an element size function $h(x, y)$, we attain the uncompressed length of the springs. We then let the forces follow Hooke's law, but only for repulsive forces, i.e the force $f$ from a spring with length $l$ and uncompressed length $l_0$ is given by
 \begin{equation}
     \label{eq:delaunay_force}
     f(l, l_0) = \begin{cases}
@@ -351,7 +351,7 @@ $b_{p_i}$ is then the intersection of all these subspaces, i.e.
 \end{equation}
 \end{definition}
 
-This process is visualized in \autoref{fig:PEBI-definition}. $p_i$ is the site marked by a red dot, with blue dots representing the other $p_j \in P$. The dashed lines are the lines from $p_i$ to each $p_j$, with the solid black lines representing the two dimensional perpendicular bisector planes between $p_i$ and each $p_j$. The area marked by solid red is the cell $b_{p_i}$.
+This process is visualized in \autoref{fig:PEBI-definition}. $p_i$ is the site marked by a red dot, with blue dots representing the other $p_j \in P$. The dashed lines are the lines from $p_i$ to each $p_j$, with the solid black lines representing the two dimensional perpendicular bisector planes between $p_i$ and each $p_j$. The light-red area is the cell $b_{p_i}$.
 
 \begin{figure}[ht]
     \centering
@@ -360,7 +360,7 @@ This process is visualized in \autoref{fig:PEBI-definition}. $p_i$ is the site m
     \label{fig:PEBI-definition}
 \end{figure}
 
-Looking at the cell marked in \autoref{fig:PEBI-definition}, it appears to resemble the central Voronoi cell in \autoref{fig:ex:voronoi-voronoi}. In fact, \textcite{UPR_chapter} presents proof that PEBI grids are Voronoi diagrams.
+Looking at the cell marked in \autoref{fig:PEBI-definition}, it appears to resemble the central Voronoi cell in \autoref{fig:ex:voronoi-voronoi}. In fact, \textcite{UPR_chapter} presents proof that PEBI grids are Voronoi diagrams, which we repeat here for completeness.
 
 \begin{theorem}
 \label{theorem:PEBI-voronoi}
@@ -374,5 +374,5 @@ Now, assume that $x$ belongs to PEBI cell $b_{p_i}$. This means it is part of al
 We thus have $x \in v_{p_i} \iff x \in b_{p_i}$, thus $v_{p_i} = b_{p_i}$ and PEBI grids are Voronoi diagrams. The proof also holds for unclipped Voronoi diagrams.
 \end{proof}
 
-As PEBI is widely used in the literature, as well as in the software used for this assignment, I will use the term PEBI grids, rather than Voronoi diagrams, going forward.
+As PEBI is widely used in the literature, as well as in the software used for this thesis, I will use the term PEBI grids, rather than Voronoi diagrams, going forward.
 
