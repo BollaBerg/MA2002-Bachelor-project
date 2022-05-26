@@ -11,7 +11,8 @@ for i = 1:length(algorithms)
         domain, ...
         'meshAlgorithm', algorithms{i} ...
     );
-
+    
+    axis off;
     plotGrid(G, 'faceColor', 'none');
     exportgraphics(gcf,"plots/gmsh_meshing_algorithms_" + algorithms{i} + ".png");
     clf;
@@ -27,8 +28,9 @@ for i = 1:length(algorithms)
     );
     
     hold on;
+    axis off;
     plotGrid(G, 'faceColor', 'none');
-    plot(faceConstraints{1}(:, 1), faceConstraints{1}(:, 2), 'lineWidth', 1, 'color', 'magenta', 'LineStyle','--');
+    plot(faceConstraints{1}(:, 1), faceConstraints{1}(:, 2), 'lineWidth', 2, 'color', 'magenta', 'LineStyle','-');
     exportgraphics(gcf,"plots/gmsh_meshing_algorithms_embedded_" + algorithms{i} + ".png");
     clf;
 end
