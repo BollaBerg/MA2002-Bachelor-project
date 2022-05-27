@@ -75,14 +75,14 @@ UPR employs three methods for generating the remaining PEBI sites \cite{UPR_thes
 To refine structured grids, especially for cells near constraints, UPR employs a method called Multilevel Quad-Tree Local Grid Refinement \cite[pp.49]{UPR_thesis}. The method refines a cell by splitting it in four, connecting the opposing edges to each other. To refine a PEBI cell, the site creating the cell is replaced by four sites, one in each quadrant of the cell.
 % TODO: Example plot
 
-One way to create unstructured grids is by using the force-based method discussed in \autoref{sec:optimal-delaunay}. To refine cells near constraints, UPR implements the following element size function \cite[Equation 4.2]{UPR_thesis}:
+The primary way of creating unstructured grids in UPR is by using the force-based method discussed in \autoref{sec:optimal-delaunay}. To refine cells near constraints, UPR uses the following element size function \cite[Equation 4.2]{UPR_thesis}:
 \begin{equation}
     h_r(p) = \min \left[
         h_{\max}, h_{\min} \exp \left(
             \frac{d(p, W)}{\epsilon}
         \right) \right],
 \end{equation}
-where $h_{\max}$ is the desired grid size far from constraints, $h_{\min}$ is the desired grid size close to constraints and the distance $d(p, W)$ is the closest distance from the point $p$ to the set of constraint sites $W$. The parameter $\epsilon$ controls the transition - a small $\epsilon$ means the transition from $h_{\min}$ to $h_{\max}$ happens quickly, while a large $\epsilon$ leads to a larger transition zone. All constraint sites are kept fixed in the algorithm.
+where $h_{\max}$ is the desired grid size far from constraints, $h_{\min}$ is the desired grid size close to constraints and the distance $d(p, W)$ is the closest distance from the point $p$ to the set of constraint sites $W$. The parameter $\epsilon$ controls the transition - a small $\epsilon$ means the transition from $h_{\min}$ to $h_{\max}$ happens quickly, while a large $\epsilon$ leads to a larger transition zone. All constraint sites are kept fixed. UPR implements this method through a package called \verb|distmesh| \cite{Distmesh}.
 % TODO: Example plot
 
 The last method UPR implements is by using the CVD energy function to optimize the Voronoi diagram, as discussed in \autoref{sec:CVD}. Again, fault and well sites are considered fixed. The CVD energy function is then minimized, but without moving any of the fault or well sites.
@@ -106,6 +106,10 @@ Create other sites, such as refinements
 Remove all reservoir sites that violate fault or well condition
 Remove all reservoir sites closer to a fault or well site than their respective grid size.
 \end{pseudocode}
+
+\paragraph{Limitations}
+The key limitation of UPR is its site placement algorithm. While \verb|distmesh| tend to produce uniform grids closely aligning with the given constraints \cite{UPR_thesis}, it is often slow, especially for grids with fine details. AS these cases may be present in practical scenarios, such as when modelling small wells in relatively large domains, it would be beneficial to implement a method for handling these cases efficiently and accurately.
+
 
 \subsection{Gmsh}
 \label{sec:Gmsh}
@@ -288,4 +292,4 @@ An illustration of this challenge is shown in \autoref{fig:triangulation-to-PEBI
 \end{figure}
 
 % No way to manually adjust mesh - must use fields
-
+The simplest way of handling this limitation would be to manually control the mesh cell placement, in order to ensure smooth conversion for both types of constraints. As Gmsh is primarily developed for automatic mesh generation, it does not have options for manual cell placement, and any manual refinements must be done through workarounds such as embedding points and lines, adjusting the mesh size field and creating transfinite meshes.

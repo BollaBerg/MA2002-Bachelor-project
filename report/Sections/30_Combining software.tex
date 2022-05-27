@@ -1,13 +1,15 @@
 \section{Combining MRST and Gmsh}
 \label{sec:combining}
+As MRST and Gmsh both have their limitations, adopting Gmsh into an MRST workflow may be beneficial. This method will discuss an existing method for loading Gmsh meshes - \nameref{sec:GmshToMRST}, and introduce a new package for integrating the two - \nameref{sec:own_software}.
 
-\subsection{\texttt{GmshToMRST}}
-% MATLAB interface for importing Gmsh
-% Creates satisfactory MRST grids
-% Requires running Gmsh manually
+\subsection{\texttt{gmshToMRST}}
+\label{sec:GmshToMRST}
+\verb|gmshToMRST| is a MATLAB module for loading created Gmsh meshes. The module reads the mesh from a \verb|.m|-file and performs the necessary computations for converting the mesh to an MRST grid. While it does this job well, one key requirement of \verb|gmshToMRST| is that the Gmsh mesh has been computed beforehand. This requires users to manually create the Gmsh mesh, slowing down the rapid prototyping MRST is designed to perform, while forcing its users to learn an entirely new program in order to generate the grids.
 
 \subsection{\texttt{gmsh2MRST}}
-% To handle this ...
+\label{sec:own_software}
+To help with this, I have developed a new software module, \verb|gmsh2MRST|, to enable automatic Gmsh mesh generation from MATLAB. By abstracting most of the manual work required for generating meshes in Gmsh, \verb|gmsh2MRST| is designed to allow users to use Gmsh as a backend for mesh creation, speeding up the mesh generation of detailed domains, without the user having to spend time learning a new software. The goal of \verb|gmsh2MRST| is to enable a near drop-in replacement of \verb|distmesh| with Gmsh-created meshes.
+
 % Automatically create Gmsh-meshes from MATLAB
 % Abstract most of the heavy lifting
 % Work as an example of how to generate meshes in Gmsh
@@ -26,14 +28,16 @@
 \subsubsection{Python interface}
 % Something about how the Python interface is implemented, how it can be used
 
+\paragraph{\texttt{some\_python\_function}}
+
 \subsubsection{MATLAB interface}
 % Something about how the MATLAB interface is implemented, how it can be used
 
-\subsubsection{\texttt{pebiGrid2DGmsh}}
+\paragraph{\texttt{pebiGrid2DGmsh}}
 % Base method
 % Simply create a Gmsh grid, then load it usin GmshToMRST
 
-\subsubsection{\texttt{clippedPebiGrid2DGmsh}}
+\paragraph{\texttt{clippedPebiGrid2DGmsh}}
 % Uses duality of Delaunay and PEBI. Uses the PEBI output from pebiGrid2DGmsh as input to clippedPebiGrid2D. Swaps face- and cell constraints.
 % Experimental, limited results, but nicer grids
 % Less flexible due to constraint swapping

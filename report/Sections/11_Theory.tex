@@ -313,7 +313,7 @@ which is minimized when $p_i = c_i$. This method is both faster and more robust 
 
 \subsubsection{Optimal Delaunay triangulation}
 \label{sec:optimal-delaunay}
-Another method for generating nice Voronoi diagrams is by exploiting the duality between Delaunay triangulations and Voronoi diagrams and using a force based algorithm. The Optimal Delaunay triangulation, introduced by \textcite{Delaunay_force_optimizing}, associates each Delaunay vertex with a joint and each edge with a spring. By defining an element size function $h(x, y)$, we attain the uncompressed length of the springs. We then let the forces follow Hooke's law, but only for repulsive forces, i.e the force $f$ from a spring with length $l$ and uncompressed length $l_0$ is given by
+Another method for generating nice Voronoi diagrams is by exploiting the duality between Delaunay triangulations and Voronoi diagrams and using a force based algorithm. The Optimal Delaunay triangulation, introduced by \textcite{Distmesh}, associates each Delaunay vertex with a joint and each edge with a spring. By defining an element size function $h(x, y)$, we attain the uncompressed length of the springs. We then let the forces follow Hooke's law, but only for repulsive forces, i.e the force $f$ from a spring with length $l$ and uncompressed length $l_0$ is given by
 \begin{equation}
     \label{eq:delaunay_force}
     f(l, l_0) = \begin{cases}
