@@ -1,17 +1,24 @@
-function G = clippedPebi2DGmsh(resGridSize, size, varargin)
-% Construct a 2D clipped PEBI grid, using Gmsh
+function G = pebiGrid2DGmsh(resGridSize, size, varargin)
+% Construct a 2D PEBI grid, using Gmsh.
+%
+% This method converts the Delaunay grid gotten from delaunay_grid_2D to a
+% PEBI grid directly.
 % 
 % SYNOPSIS:
-%   G = pebiGrid2DGmsh(resGridSize, pdims, faceConstraints)
+%   G = pebiGrid2DGmsh(resGridSize, varargin)
 %
 % ARGUMENTS
 %   resGridSize     - Size of the reservoir grid cells, in units of meters.
 %
-%   size            - Vector, length 2, [xmax, ymax], of physical size in
-%                   units of meters of the computational domain. The
-%                   domain always starts at [0, 0].
-%
 % OPTIONAL PARAMETERS
+%   shape           - Vector, length 2, [xmax, ymax], of physical size in
+%                   units of meters of the computational domain OR
+%                   - k x 2 array of coordinates. Each coordinate
+%                   corresponds to a vertex in the polygon boundary. The
+%                   coordinates must be ordered clockwise or counter
+%                   clockwise.
+%                   Defaults to [1, 1]
+%
 %   faceConstraints - A struct of vectors. Each vector, size nf x 2, is the
 %                   coordinates of a surface-trace. The surface is
 %                   assumed to be linear between the coordinates. The
@@ -137,14 +144,18 @@ for i = 1:length(varargin)
     end
 end
 
-pyG = pebiGrid2DGmsh(resGridSize, size, varargin{:});
+pyG = delaunayGrid2DGmsh(resGridSize, varargin{:});
 
-bnd = [
-    0 0;
-    size(1) 0;
-    size(1) size(2);
-    0 size(2);
-];
+if length(shape) == 2
+    bnd = [
+        0 0;
+        size(1) 0;
+        size(1) size(2);
+        0 size(2);
+    ];
+else
+    bnd = shape;
+end
 
 G = clippedPebi2D(pyG.nodes.coords, bnd);
 

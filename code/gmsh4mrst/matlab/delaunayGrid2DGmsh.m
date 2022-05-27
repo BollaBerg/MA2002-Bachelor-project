@@ -1,20 +1,21 @@
-function G = pebiGrid2DGmsh(resGridSize, size, varargin)
-% Construct a 2D grid, using Gmsh
+function G = delaunayGrid2DGmsh(resGridSize, size, varargin)
+% Construct a 2D Delaunay grid, using Gmsh
 % 
 % SYNOPSIS:
-%   G = pebiGrid2DGmsh(resGridSize, pdims, faceConstraints)
+%   G = delaunayGrid2DGmsh(resGridSize, varargin)
 %
 % ARGUMENTS
 %   resGridSize     - Size of the reservoir grid cells, in units of meters.
 %
+% OPTIONAL PARAMETERS
 %   shape           - Vector, length 2, [xmax, ymax], of physical size in
 %                   units of meters of the computational domain OR
 %                   - k x 2 array of coordinates. Each coordinate
 %                   corresponds to a vertex in the polygon boundary. The
 %                   coordinates must be ordered clockwise or counter
-%                   clockwise. 
+%                   clockwise.
+%                   Defaults to [1, 1]
 %
-% OPTIONAL PARAMETERS
 %   faceConstraints - A struct of vectors. Each vector, size nf x 2, is the
 %                   coordinates of a surface-trace. The surface is
 %                   assumed to be linear between the coordinates. The
@@ -213,7 +214,7 @@ if length(shape) > 2
     shape = shapeArrayToStruct(shape);
 end
 
-py.gmsh2mrst.pebi_grid_2D( ...
+py.gmsh4mrst.delaunay_grid_2D( ...
     cell_dimensions = p.Results.resGridSize, ...
     shape = shape, ...
     face_constraints = faceConstraints, ...
