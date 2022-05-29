@@ -3,7 +3,6 @@ P = [
     0.2 0.2;
     0.2 0.7;
     0.3 0.5;
-    0.5 0.4;
     0.5 0.8;
     0.7 0.5;
     0.8 0.2;
@@ -43,6 +42,7 @@ plot(P(2:end, 1), P(2:end, 2), LineStyle="none", Color='b', Marker='.', MarkerSi
 plot(P(1, 1), P(1, 2), LineStyle="none", Color='r', Marker='.', MarkerSize=20);
 
 axis("off");
-xlim([-0.1 1.1])
-ylim([-0.1 1.1])
+axis("image");
+xlim([0.05 0.95])
+ylim([0 .9])
 saveas(gcf, 'PEBI_definition.png')
