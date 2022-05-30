@@ -16,11 +16,11 @@ plot(cellConstraints{1}(:, 1), cellConstraints{1}(:, 2), color="magenta", lineSt
 exportgraphics(gcf,'plots/constraints_MATLAB_2.png');
 
 F = surfaceSites2D(faceConstraints, resGridSize/3);
-wellSites = lineSites2D(cellConstraints, resGridSize/2);
+[wellSites,cGs,protPts,pGs] = lineSites2D(cellConstraints, resGridSize/2);
 
 % Remove conflict points
 Pts = surfaceSufCond2D(G.nodes.coords,F);
-Pts = removeConflictPoints(Pts, wellSites, resGridSize/2);
+Pts = removeConflictPoints(Pts, wellSites, cGs);
 Pts = [Pts; wellSites; F.f.pts];
 
 clf;
