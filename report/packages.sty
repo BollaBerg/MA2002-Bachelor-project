@@ -1,4 +1,9 @@
 % OWN STUFF
+% Nicer tables
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{booktabs}
+
 % Fix minted error arising from having the report in its own subdirectory (not in the main directory) of the project. THIS IS ONLY NECESSARY FOR OVERLEAF, and should be removed if compiling the file locally
 \usepackage[outputdir=../]{minted}
 
@@ -18,8 +23,8 @@
   listing only,
   minted style=tango,
   minted language=python,
-  title={Python \thetcbcounter: #2},
-  list entry={Python \thetcbcounter: #2},
+  title={Code Segment \thetcbcounter: #2},
+  list entry={Code Segment \thetcbcounter: #2},
   minted options={linenos=false},
   #1,
 }
@@ -31,20 +36,20 @@
   listing only,
   minted style=tango,
   minted language=python,
-  title={Python \thetcbcounter: #2},
-  list entry={Python \thetcbcounter: #2},
+  title={Code Segment \thetcbcounter: #2},
+  list entry={Code Segment \thetcbcounter: #2},
   minted options={linenos=false},
   #1,
 }
-\newtcblisting[auto counter, list inside=code]{matlab}[2][]{%
+\newtcblisting[auto counter, list inside=code, use counter from=python]{matlab}[2][]{%
   listing engine=minted,
   colback=blue!3!white,
   colframe=black!50,
   listing only,
   minted style=tango,
   minted language=matlab,
-  title={MATLAB \thetcbcounter: #2},
-  list entry={MATLAB \thetcbcounter: #2},
+  title={Code Segment \thetcbcounter: #2},
+  list entry={Code Segment \thetcbcounter: #2},
   minted options={linenos=false},
   #1,
 }

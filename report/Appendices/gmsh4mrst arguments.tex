@@ -1,0 +1,102 @@
+\subsection{Parameters in \texttt{gmsh4mrst}}
+\label{app:gmsh4mrst-arguments}
+
+This appendix gives a brief description of the available user-settable parameters of \verb|gmsh4mrst|. The parameters are formatted as they are used in MATLAB, but all parameters -- unless otherwise noted -- are available in Python as well. Unless specifically stated, all Python parameters have the same name as their MATLAB equivalents, only written in \verb|snake_case| instead of \verb|camelCase|.
+
+\subsubsection{Background grid refinement}
+Most of the available arguments control the refinement of the background grid produced in Python, and are passed directly through to the Python package. These arguments are listed in \autoref{tab:grid-arguments}.
+
+\begin{tabularx}{\textwidth}{l X}
+    \caption{Arguments controlling background grid refinement in \texttt{gmsh4mrst}.}
+    \label{tab:grid-arguments} \\
+    \toprule \textbf{Argument} & \textbf{Description} \\\midrule \endfirsthead
+    \textbf{Argument} & \textbf{Description} \\\midrule \endhead
+    \bottomrule & \textit{Continued on next page.} \endfoot
+    \bottomrule \endlastfoot
+    
+    \texttt{resGridSize} & The default size of each cell in the grid. In Python, this argument is named \texttt{cell\_dimensions}. \\
+    \texttt{faceConstraintFactor} & Controls the size of the cells close to the face constraints. The minimum size of the face constraint threshold field is given as \texttt{faceConstraintFactor}~*~\texttt{resGridSize}. \\
+    \texttt{faceConstraintRefinementFactor} & The cell size in the background refinement done around the face constraints. Only available in \texttt{pebiGrid2DGmsh} and \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{minFCThresholdDistance} & Distance from face constraints where cell dimensions will start increasing. Used as the minimum distance of the face constraint threshold field. \\
+    \texttt{maxFCThresholdDistance} & Distance from face constraints where cell dimensions will be back to their default value. Used as the maximum distance of the face constraint threshold field. \\
+    \texttt{FCMeshSampling} & How many points along each face constraint line to sample for distance calculation. \\
+    \texttt{cellConstraintFactor} & Same as \texttt{faceConstraintFactor}, but for cell constraints. \\
+    \texttt{cellConstraintLineFactor} & Overrides \texttt{cellConstraintFactor} for cell constraint lines. Only available in \texttt{pebiGrid2DGmsh}. \\
+    \texttt{cellConstraintPointFactor} & Overrides \texttt{cellConstraintFactor} for cell constraint points. \\
+    \texttt{cellConstraintRefinementFactor} & The cell size in the background refinement done along the cell constraints. Only available in \texttt{pebiGrid2DGmshBase} and \texttt{delaunayGrid2DGmsh} and \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{minCCThresholdDistance} & Same as \texttt{minFCThresholdDistance}, but for cell constraints. \\
+    \texttt{maxCCThresholdDistance} & Same as \texttt{maxFCThresholdDistance}, but for cell constraints. \\
+    \texttt{CCMeshSampling} & Same as \texttt{FCMeshSampling}, but for cell constraints. \\
+    \texttt{faceIntersectionFactor} & Same as \texttt{faceConstraintFactor}, but for intersections of constraints. Only available in \texttt{pebiGrid2DGmsh} and \texttt{delaunayGrid2DGmsh}. \\
+    \texttt{minIntersectionDistance} & Same as \texttt{minFCThresholdDistance}, but for intersections of constraints. Only available in \texttt{pebiGrid2DGmsh} and \texttt{delaunayGrid2DGmsh}. \\
+    \texttt{maxIntersectionDistance} & Same as \texttt{maxFCThresholdDistance}, but for intersections of constraints. Only available in \texttt{pebiGrid2DGmsh} and \texttt{delaunayGrid2DGmsh}. \\
+    \texttt{meshAlgorithm} & Which Gmsh meshing algorithm to use. \\
+    \texttt{recombinationAlgorithm} & Which Gmsh recombination algorithm to use. \\
+\end{tabularx}
+
+
+
+\subsubsection{Constraint creation in \texttt{pebiGrid2DGmsh}}
+The MATLAB method \verb|pebiGrid2DGmsh| creates constraints in MATLAB instead of Python, and therefore accepts arguments that influence how this creation is done. These arguments do the same as in \verb|pebiGrid2D|, and are kept to keep the replacement as simple as possible. The arguments are listed in \autoref{tab:constraint-arguments}.
+
+\begin{tabularx}{\textwidth}{l X}
+    \caption{Constraint creation arguments in \texttt{pebiGrid2DGmsh}.}
+    \label{tab:constraint-arguments} \\
+    \toprule \textbf{Argument} & \textbf{Description} \\\midrule \endfirsthead
+    \textbf{Argument} & \textbf{Description} \\\midrule \endhead
+    \bottomrule & \textit{Continued on next page.} \endfoot
+    \bottomrule \endlastfoot
+    
+    \texttt{interpolateCC} & Whether any interpolation should be done along the cell constraint lines. \\
+    \texttt{CCRefinement} & Whether refinement should be done around the cell constraints. \\
+    \texttt{CCEps} & The refinement transition around the cell constraints. \\
+    \texttt{CCRho} & Controls the distance between the cell constraint sites. The distance between the sites is given as \texttt{CCRho}~*~\texttt{CCFactor}~*~\texttt{resGridSize}. \\
+    \texttt{protLayer} & Whether a protection layer should be added around the cell constraints. \\
+    \texttt{protD} & The distance between the cell constraint and protection sites. \\
+    \texttt{interpolateFC} & Same as \texttt{interpolateCC}, but for face constraints. \\
+    \texttt{circleFactor} & The ratio between the radius and distance between the circles used to create the face constraints. \\
+    \texttt{FCRho} & Same as \texttt{CCRho}, but for face constraints. \\
+    \texttt{sufFCCond} & Whether the fault condition (Definition~\ref{def:fault-condition}) should be enforced, instead of a less strict condition. \\
+\end{tabularx}
+
+
+
+\subsubsection{Transfinite grid control}
+Several arguments are available for controlling the transfinite grids used to produce cell constraints in \verb|delaunay_grid_2D| and both face- and cell constraints in \verb|pebi_base_2D|. Unless explicitly stated, all arguments are available in both these methods. These arguments are listed in \autoref{tab:transfinite-arguments}.
+
+\begin{tabularx}{\textwidth}{l X}
+    \caption{Arguments controlling transfinite grid creation in \texttt{gmsh4mrst}.}
+    \label{tab:transfinite-arguments} \\
+    \toprule \textbf{Argument} & \textbf{Description} \\\midrule \endfirsthead
+    \textbf{Argument} & \textbf{Description} \\\midrule \endhead
+    \bottomrule & \textit{Continued on next page.} \endfoot
+    \bottomrule \endlastfoot
+    
+    \texttt{faceConstraintParallelFactor} & Overrides \texttt{faceConstraintFactor} along the face constraint lines, i.e. sets the length of the transfinite cells along the constraints. Only available in \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{faceConstraintPerpendicularFactor} & Overrides \texttt{faceConstraintFactor} across the face constraint lines, i.e. sets the width of the transfinite cells across the constraints. Only available in \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{faceConstraintPointFactor} & Overrides \texttt{faceConstraintFactor} for cell constraint points. Only available in \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{faceConstraintPerpendicularCells} & The number of transfinite nodes should be placed across the end-segment of the face constraint transfinite grids, i.e. how many cells wide should the face constraint grid be. Only available in \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{cellConstraintParallelFactor} & Overrides \texttt{cellConstraintFactor} along the cell constraint lines, i.e. sets the length of the transfinite cells along the constraints. \\
+    \texttt{cellConstraintPerpendicularFactor} & Overrides \texttt{cellConstraintFactor} across the cell constraint lines, i.e. sets the width of the transfinite cells across the constraints. \\
+    \texttt{cellConstraintPerpendicularCells} & The number of transfinite nodes should be placed across the end-segment of the cell constraint transfinite grids, i.e. how many cells wide should the cell constraint grid be. Only available in \texttt{pebiGrid2DGmshBase}. \\
+\end{tabularx}
+
+
+\subsubsection{Miscellaneous arguments}
+Some arguments are not part of the above groups, but still worth mentioning. These arguments are listed in \autoref{tab:misc-arguments}.
+
+\begin{tabularx}{\textwidth}{l X}
+    \caption{Miscellaneous arguments in \texttt{gmsh4mrst}.}
+    \label{tab:misc-arguments} \\
+    \toprule \textbf{Argument} & \textbf{Description} \\\midrule \endfirsthead
+    \textbf{Argument} & \textbf{Description} \\\midrule \endhead
+    \bottomrule & \textit{Continued on next page.} \endfoot
+    \bottomrule \endlastfoot
+    
+    \texttt{shape} & The shape of the domain. Can either be a 2D array of points or a size $[x, y]$. If a size is passed, the domain will be a square between $[0, 0]$ and $[x, y]$. \\
+    \texttt{faceConstraints} & The face constraints the grid should adapt to. \\
+    \texttt{cellConstraints} & The cell constraints the grid should adapt to. \\
+    \texttt{convertToPEBI} & Whether the grid should be converted to PEBI. Only available in \texttt{pebiGrid2DGmshBase}. \\
+    \texttt{savename} & A name the Gmsh mesh should be saved as. Only available in the Python package, as it is set automatically in MATLAB. \\
+    \texttt{run\_frontend} & Whether the Gmsh frontend should be run after creating the grid. Only available in the Python package. \\
+\end{tabularx}
