@@ -7,7 +7,7 @@ Code in this directory will firstly be about getting to know the generator (prim
 This project uses two languages - Python and MATLAB
 
 ### Python
-This project runs on Python `3.10.2`
+This project runs on Python `3.8`
 
 All python packages can be found in `requirements.txt` and, as usual, installed by running `pip install -r requirements.txt`
 
