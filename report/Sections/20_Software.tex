@@ -1,4 +1,5 @@
 \section{Software}
+\label{sec:Software}
 As there exists a vast range of solutions for creating grids to represent real domains, learning, using and discussing all of them are way beyond the scope of this thesis. I will instead focus on two tools -- MRST in \autoref{sec:MRST} and Gmsh in \autoref{sec:Gmsh} -- as well as ways to combine the two tools in \autoref{sec:combining}. 
 
 \subsection{MRST}
@@ -45,6 +46,7 @@ where $c_f$ is a constant circle factor, determining the distance between the fa
 % TODO: Example plot
 
 \begin{definition}[Fault condition]
+\label{def:fault-condition}
 Let $p_1$ and $p_2$ be two fault sites placed at the intersection of the same pair of fault circles. The \emph{fault condition} is satisfied if the interior of the two fault circles does not contain any sites.
 \end{definition}
 
@@ -117,7 +119,8 @@ Gmsh is an open-source grid generator, CAD engine, and post-processor developed 
 
 First released in 1998, Gmsh is built on a simple philosophy -- to be a fast, light, and user-friendly mesh generator \cite{Gmsh_article}. Gmsh is designed to generate large meshes in little time, claiming they can generate ``larger than average'' meshes in less than a minute on a standard computer, while being able to visualize the mesh in real-time. The program is designed to have as little footprint as possible, with easy installation and a comprehensible code base. Finally, Gmsh is designed such that a novice user is able to quickly create simple meshes, with an extensible and well-documented API~\cite{Gmsh_presentation}.
 
-\subsubsection{Modules}
+\subsubsection{Gmsh modules}
+\label{sec:gmsh-modules}
 Gmsh is structured in four separate modules. \emph{The Geometry module} is how Gmsh creates new physical geometry. Gmsh was originally designed with a limited CAD engine, primarily suited for simple structures \cite{Gmsh_article}. However, as the user base of Gmsh grew, so did the need for better CAD support, allowing Gmsh to mesh industrial CAD models. To handle this, Gmsh's geometry module is built on a set of four abstract data structures. These are:
 \begin{itemize}
     \item vertices, $G_i^0$, of dimension 0,
@@ -134,7 +137,39 @@ Combining these structures into a boundary representation, Gmsh is able to accur
     \item defining mesh sizes in another mesh, or
     \item setting default mesh sizes that adapt to the curvature of model entities.
 \end{itemize}
-These fields are highly flexible, and can depend on several factors, such as distance from an object or mathematical functions. When several fields exists, Gmsh simply uses the minimum size of all fields. The aim of the mesh generator is to build a mesh of good quality that complies with the supplied mesh size field.
+These fields are highly flexible, and can depend on several factors. Examples of these fields include:
+\begin{description}
+    \item[Distance fields:] Distance fields are used to calculate the distance from a set of lines and points. An illustration of the output from a distance field is shown in \autoref{fig:gmsh-distance}.
+    \item[Threshold fields:] Threshold fields are used to set values depending on another variable, often the distance from a distance field. The threshold field has four parameters: minimum and maximum for both distance and size. The field outputs a stepped curve -- when the distance is lower than the minimum distance, the minimum size is returned. Between the minimum and maximum distance, the size scales linearly, and when the distance is above the maximum, the size is equal to the maximum size. An illustration of this curve is shown in \autoref{fig:threshold-field}. An illustration of the output from a threshold field is shown in \autoref{fig:gmsh-threshold}.
+    
+    \begin{figure}[ht]
+        \centering
+        \includegraphics[width=0.5\textwidth]{report/Images/Software/thresholdCurve.png}
+        \caption{Illustration of the Gmsh threshold field.}
+        \label{fig:threshold-field}
+    \end{figure}
+    
+    \item[Minimum fields:] Minimum fields simply returns the minimum of a set of fields. It is often used to get the smallest cell size from a set of size fields.
+\end{description}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Software/Gmsh fields/gmsh_field_distance.png}
+        \caption{Distance field}
+        \label{fig:gmsh-distance}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Software/Gmsh fields/gmsh_field_threshold.png}
+        \caption{Threshold field}
+        \label{fig:gmsh-threshold}
+    \end{subfigure}
+    \caption[Output from Gmsh distance and threshold fields.]{Output from Gmsh distance and threshold fields. The distance field calculates the distance from a central line, and the threshold field uses the distance field as input. The blue color indicates a low output, i.e. the minimum distance and size, respectively, and the red indicates a high output.}
+    \label{fig:gmsh-fields}
+\end{figure}
+
 
 The meshing module provides several algorithm for meshing 2D domains. An overview of these, as well as a short description, is given below. All algorithms start with a Delaunay mesh containing all points of an originally created 1D mesh.
 \begin{description}
@@ -218,7 +253,7 @@ Examples of the meshes created by these algorithms can be seen in \autoref{fig:G
     \label{fig:Gmsh-meshing-algorithms}
 \end{figure}
 
-Gmsh is primarily aimed at creating unstructured meshes. It does, however, provide some methods for generating structured meshes, including support for transfinite meshes \cite{Gmsh_article}. While these require some manual work to work nicely, they provide a way to generate structured, controlled meshes. An example of transfinite meshes is shown in \autoref{fig:py:Gmsh-transfinite}, with code in Python~\ref{py:Gmshtransfinite}.
+Gmsh is primarily aimed at creating unstructured meshes. It does, however, provide some methods for generating structured meshes, including support for transfinite meshes \cite{Gmsh_article}. While these require some manual work to work nicely, they provide a way to generate structured, controlled meshes. An example of transfinite meshes is shown in \autoref{fig:py:Gmsh-transfinite}, with code in Code~Segment~\ref{py:Gmshtransfinite}.
 
 \emph{The Solver module} provides two ways to connect Gmsh to external finite element solvers. The most straight-forward way is by directly using the Gmsh API to load geometry, meshes, and data \cite{Gmsh_article}. This method requires a significant programming investment from the solver developers, as the connection between the solver and the API must be created.
 
@@ -227,18 +262,18 @@ To maintain the goal of being a user friendly generator, Gmsh provides a Gmsh in
 \emph{The Post-Processing module} enables loading and display of data views, alongside the geometry and mesh \cite{Gmsh_article}. Views are collections of values, both scalar and tensors, where scalar fields can be visualized as iso-surfaces or color maps and vector fields as arrows or displacement maps. Post-processing is outside the scope of this thesis. 
 
 
-\subsubsection{Examples}
+\subsubsection{Examples of Gmsh}
 \label{sec:Gmsh-examples}
 While Gmsh is designed to be user friendly, the scope of features and interfaces make the provided APIs somewhat complex. This section will present some basic examples of Gmsh programs, as well as their outputs. Source code for the examples is shown in Appendix~\ref{app:Gmsh-examples}.
 
 \paragraph{Simple square mesh:}
-While a square mesh is simple to envision, the creation of one requires a bit of code. Python~\ref{py:Gmshgrid} shows how this can be implemented, using Gmsh's Python API. The output is shown in \autoref{fig:py:Gmsh-grid}.
+While a square mesh is simple to envision, the creation of one requires a bit of code. Code~Segment~~\ref{py:Gmshgrid} shows how this can be implemented, using Gmsh's Python API. The output is shown in \autoref{fig:py:Gmsh-grid}.
 
 
 \begin{figure}[tp]
     \centering
     \includegraphics[width=0.6\textwidth]{report/Images/Software/Gmsh examples/gmsh_square_mesh.png}
-    \caption[Simple square grid generated in Gmsh]{Simple square grid generated in Gmsh. Output from Python~\ref{py:Gmshgrid}.}
+    \caption[Simple square grid generated in Gmsh]{Simple square grid generated in Gmsh. Output from Code~Segment~~\ref{py:Gmshgrid}.}
     \label{fig:py:Gmsh-grid}
 \end{figure}
 
@@ -246,26 +281,26 @@ While a square mesh is simple to envision, the creation of one requires a bit of
 \paragraph{Adjusting the mesh size field:}
 Gmsh offers two ways to adjust the local resolution of the produced mesh. The first option, as shown in \autoref{fig:Gmsh-meshing-algorithms}, is to embed lines in the mesh, making Gmsh use the lines as faces in the mesh. The second method is to adjust the mesh size field function.
 
-An example of the latter method is shown in Python~\ref{py:Gmshfield}, with output in \autoref{fig:py:Gmsh-field}. In the example, we use a line as basis for a threshold field that scales the mesh size based on distance from the line. We also use a point as basis for a math field that scales the mesh size based on the square of the distance from the point. We finally combine the fields by using the minimum mesh size. Note that neither the point nor the line are embedded in the mesh, meaning that there is no guarantee that the faces of the mesh align with either. The example also shows how Gmsh can connect to multiple CAD kernels; in this case using the OpenCASCADE kernel \cite{Gmsh_reference}.
+An example of the latter method is shown in Code~Segment~~\ref{py:Gmshfield}, with output in \autoref{fig:py:Gmsh-field}. In the example, we use a line as basis for a threshold field that scales the mesh size based on distance from the line. We also use a point as basis for a math field that scales the mesh size based on the square of the distance from the point. We finally combine the fields by using the minimum mesh size. Note that neither the point nor the line are embedded in the mesh, meaning that there is no guarantee that the faces of the mesh align with either. The example also shows how Gmsh can connect to multiple CAD kernels; in this case using the OpenCASCADE kernel \cite{Gmsh_reference}.
 
 \begin{figure}[htp]
     \centering
     \includegraphics[width=0.6\textwidth]{report/Images/Software/Gmsh examples/gmsh_mesh_size_fields.png}
-    \caption[Adjusted mesh size generated in Gmsh]{Locally adjusted mesh resolution generated in Gmsh. Output from Python~\ref{py:Gmshfield}.}
+    \caption[Adjusted mesh size generated in Gmsh]{Locally adjusted mesh resolution generated in Gmsh. Output from Code~Segment~~\ref{py:Gmshfield}.}
     \label{fig:py:Gmsh-field}
 \end{figure}
 
 \paragraph{Structured meshes:}
-Structured meshes, or local patches of structured meshes, can be created by using transfinite curves and surfaces. An example of this is shown in Python~\ref{py:Gmshtransfinite}, with output in \autoref{fig:py:Gmsh-transfinite}. In the example, two patches of transfinite meshes are created. The green mesh consists of linearly distributed transfinite nodes, while the orange consists of nodes following a geometric progression with power $1.5$. The cyan mesh is a standard unstructured mesh. To get rectangular cells, we use the recombine feature, combining the triangular grid into quadrilaterals within the transfinite meshes.
+Structured meshes, or local patches of structured meshes, can be created by using transfinite curves and surfaces. An example of this is shown in Code~Segment~~\ref{py:Gmshtransfinite}, with output in \autoref{fig:py:Gmsh-transfinite}. In the example, two patches of transfinite meshes are created. The green mesh consists of linearly distributed transfinite nodes, while the orange consists of nodes following a geometric progression with power $1.5$. The cyan mesh is a standard unstructured mesh. To get rectangular cells, we use the recombine feature, combining the triangular grid into quadrilaterals within the transfinite meshes.
 
 \begin{figure}[htp]
     \centering
     \includegraphics[width=0.7\textwidth]{report/Images/Software/Gmsh examples/gmsh_structured_meshes.png}
-    \caption[Structured meshes generated in Gmsh]{Structured meshes generated in Gmsh. Output from Python~\ref{py:Gmshtransfinite}.}
+    \caption[Local patches of structured meshes generated in Gmsh]{Local patches of structured meshes generated in Gmsh. Output from Code~Segment~~\ref{py:Gmshtransfinite}.}
     \label{fig:py:Gmsh-transfinite}
 \end{figure}
 
-\subsubsection{Limitations}
+\subsubsection{Limitations of Gmsh}
 \label{sec:Gmsh-limitations}
 Although Gmsh is a well-developed solution for both meshing and CAD work, it does have some limitations, especially when combining it with MRST and UPR. One key difference between the two systems arises from the fact that Gmsh operates with triangulations, while the UPR module of MRST operates with PEBI grids. As these are dualities, we can easily convert between triangulation nodes to PEBI sites. This does, however, have a potential of losing information about cell faces.
 
