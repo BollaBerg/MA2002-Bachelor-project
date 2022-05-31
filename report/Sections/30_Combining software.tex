@@ -6,7 +6,6 @@ As MRST and Gmsh both have their limitations, adopting Gmsh into an MRST workflo
 \label{sec:GmshToMRST}
 Originally developed by \textcite{gmsh_to_mrst} as a stand-alone method for loading Gmsh meshes into MRST, \verb|gmshToMrst| became part of MRST's module library with release \verb|2022a|. The module reads the mesh from an \verb|.m|-file and performs the necessary computations for converting the mesh to an MRST grid. While it does this job well, one key requirement of \verb|gmshToMrst| is that the Gmsh mesh has been computed beforehand. This requires users to manually create the Gmsh mesh, slowing down the rapid prototyping MRST is designed to perform, while forcing its users to learn an entirely new program in order to generate the grids.
 
-% \verb|gmshToMRST| is a MATLAB module for loading created Gmsh meshes. 
 
 \subsection{\texttt{gmsh4mrst}}
 \label{sec:own_software}
@@ -114,7 +113,7 @@ All the MATLAB methods gives the user complete control of all parameters of the 
 % How the different features are implemented, concretely
 % Discuss Fields, constraint implementation (especially cell constraints), etc.
 \paragraph{Faults as embedded lines:}
-Faults are implemented differently in the three available methods, but here we discuss faults implemented as embedded face constraint lines in Gmsh, which is how it is done in \verb|delaunayGrid2D|. In Gmsh, embedding a line is a relatively simple process, but extra care is taken to ensure intersections between faults are modelled correctly. If two constraint segments intersect, both segments are split at the segment, creating four sub-segments -- two starting at the intersection and two ending at the intersection. This process is similar to the one shown in 
+Faults are implemented differently in the three available methods, but here we discuss faults implemented as embedded face constraint lines in Gmsh, which is how it is done in \verb|delaunayGrid2D|. In Gmsh, embedding a line is a relatively simple process, but extra care is taken to ensure intersections between faults are modelled correctly. If two constraint segments intersect, both segments are split at the segment, creating four sub-segments -- two starting at the intersection and two ending at the intersection. % This process is similar to the one shown in 
 
 \paragraph{Faults as transfinite grids:}
 In \verb|pebiGrid2DGmshBase|, faults are implemented as transfinite grids. By creating a structured grid around the fault, we can manually control the site distribution around the line, ensuring it ends up as a face in the final grid. We can create protective sites around the faults by increasing the number of perpendicular nodes used in the transfinite grid. When the grid is converted to PEBI, each fault grid should have an even number of perpendicular nodes to make it a face in the grid, while they should have an odd number of nodes to stay as a face in the Delaunay triangulation. An illustration of this process is shown in \autoref{fig:trans-faults}.

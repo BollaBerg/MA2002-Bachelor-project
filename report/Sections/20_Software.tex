@@ -84,7 +84,7 @@ The primary way of creating unstructured grids in UPR is by using the force-base
             \frac{d(p, W)}{\epsilon}
         \right) \right],
 \end{equation}
-where $h_{\max}$ is the desired grid size far from constraints, $h_{\min}$ is the desired grid size close to constraints, and the distance $d(p, W)$ is the closest distance from the point $p$ to the set of constraint sites $W$. The parameter $\epsilon$ controls the transition -- a small $\epsilon$ means the transition from $h_{\min}$ to $h_{\max}$ happens quickly, while a large $\epsilon$ leads to a wider transition zone. All constraint sites are kept fixed. UPR implements this method through a package called \verb|distmesh| \cite{Distmesh}.
+where $h_{\max}$ is the desired grid size far from constraints, $h_{\min}$ is the desired grid size close to constraints, and the distance $d(p, W)$ is the closest distance from the point $p$ to the set of constraint sites $W$. The parameter $\epsilon$ controls the transition -- a small $\epsilon$ means the transition from $h_{\min}$ to $h_{\max}$ happens quickly, while a large $\epsilon$ leads to a wider transition zone. All constraint sites are kept fixed. UPR relies on the implementation from a package called \verb|distmesh| \cite{Distmesh}. An example of this algorithm can be seen in \autoref{fig:optimal-delaunay}.
 % TODO: Example plot
 
 The last method UPR implements is by using the CVD energy function to optimize the Voronoi diagram, as discussed in \autoref{sec:CVD}. Again, fault and well sites are considered fixed. The CVD energy function is then minimized, but without moving any of the fault or well sites.
@@ -117,7 +117,7 @@ The key limitation of UPR is its site placement algorithm. While \verb|distmesh|
 \label{sec:Gmsh}
 Gmsh is an open-source grid generator, CAD engine, and post-processor developed by \textcite{Gmsh_article}. Supporting both a graphical user interface, a dedicated scripting language, and APIs in C, C++, Julia, and Python, Gmsh has become one of the most popular finite element mesh generators in the world \cite{Gmsh_presentation}.
 
-First released in 1998, Gmsh is built on a simple philosophy -- to be a fast, light, and user-friendly mesh generator \cite{Gmsh_article}. Gmsh is designed to generate large meshes in little time, claiming they can generate ``larger than average'' meshes in less than a minute on a standard computer, while being able to visualize the mesh in real-time. The program is designed to have as little footprint as possible, with easy installation and a comprehensible code base. Finally, Gmsh is designed such that a novice user is able to quickly create simple meshes, with an extensible and well-documented API~\cite{Gmsh_presentation}.
+First released in 1998, Gmsh is built on a simple philosophy -- to be a fast, light, and user-friendly mesh generator \cite{Gmsh_article}. Gmsh is designed to generate large meshes in little time, claiming they can generate ``larger than average'' meshes in less than a minute on a standard computer, while being able to visualize the mesh in real-time. The program is designed to have as little footprint as possible, with easy installation and a comprehensible code base. Finally, Gmsh is designed such that a novice user is able to quickly create simple meshes, with an extensible and well-documented API.
 
 \subsubsection{Gmsh modules}
 \label{sec:gmsh-modules}
@@ -126,11 +126,11 @@ Gmsh is structured in four separate modules. \emph{The Geometry module} is how G
     \item vertices, $G_i^0$, of dimension 0,
     \item edges, $G_i^1$, of dimension 1,
     \item faces, $G_i^2$, of dimension 2, and
-    \item regions, $G_i^3$, of dimension 3 \cite{Gmsh_article}.
+    \item regions, $G_i^3$, of dimension 3.
 \end{itemize}
 Combining these structures into a boundary representation, Gmsh is able to accurately define any 3D model. The model is built as a list of entities, with each entity possibly consisting of multiple data structures.
 
-\emph{The Meshing module} handles, naturally, the meshing done in Gmsh. The meshing is based on the target mesh size of all points $(x, y, z)$ in the domain being given by the mesh size field function $\delta(x, y, z)$ \cite{Gmsh_article}. This function can be defined by:
+\emph{The Meshing module} handles, naturally, the meshing done in Gmsh. The meshing is based on the target mesh size of all points $(x, y, z)$ in the domain being given by the mesh size field function $\delta(x, y, z)$. This function can be defined by:
 \begin{itemize}
     \item giving vertices a target mesh size, then interpolating along edges,
     \item giving model edges a mesh gradient,
@@ -257,9 +257,9 @@ Gmsh is primarily aimed at creating unstructured meshes. It does, however, provi
 
 \emph{The Solver module} provides two ways to connect Gmsh to external finite element solvers. The most straight-forward way is by directly using the Gmsh API to load geometry, meshes, and data \cite{Gmsh_article}. This method requires a significant programming investment from the solver developers, as the connection between the solver and the API must be created.
 
-To maintain the goal of being a user friendly generator, Gmsh provides a Gmsh interface through Unix or TCP/IP sockets \cite{Gmsh_article}. This lets a user launch solvers directly from Gmsh, and requires few adaptations of the solver software. Solvers are outside the scope of this thesis.
+To maintain the goal of being a user friendly generator, Gmsh provides a Gmsh interface through Unix or TCP/IP sockets. This lets a user launch solvers directly from Gmsh, and requires few adaptations of the solver software. Solvers are outside the scope of this thesis.
 
-\emph{The Post-Processing module} enables loading and display of data views, alongside the geometry and mesh \cite{Gmsh_article}. Views are collections of values, both scalar and tensors, where scalar fields can be visualized as iso-surfaces or color maps and vector fields as arrows or displacement maps. Post-processing is outside the scope of this thesis. 
+\emph{The Post-Processing module} enables loading and display of data views, alongside visualizations of the geometry and mesh. Views are collections of values, both scalar and tensors, where scalar fields can be visualized as iso-surfaces or color maps and vector fields as arrows or displacement maps. Post-processing is outside the scope of this thesis. 
 
 
 \subsubsection{Examples of Gmsh}
@@ -267,7 +267,7 @@ To maintain the goal of being a user friendly generator, Gmsh provides a Gmsh in
 While Gmsh is designed to be user friendly, the scope of features and interfaces make the provided APIs somewhat complex. This section will present some basic examples of Gmsh programs, as well as their outputs. Source code for the examples is shown in Appendix~\ref{app:Gmsh-examples}.
 
 \paragraph{Simple square mesh:}
-While a square mesh is simple to envision, the creation of one requires a bit of code. Code~Segment~~\ref{py:Gmshgrid} shows how this can be implemented, using Gmsh's Python API. The output is shown in \autoref{fig:py:Gmsh-grid}.
+While a square mesh is simple to envision, the creation of one requires a bit of code. Code~Segment~\ref{py:Gmshgrid} shows how this can be implemented, using Gmsh's Python API. The output is shown in \autoref{fig:py:Gmsh-grid}.
 
 
 \begin{figure}[tp]

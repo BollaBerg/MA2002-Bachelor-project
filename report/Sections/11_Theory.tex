@@ -1,20 +1,26 @@
 \section{Theory}
 \label{sec:Theory}
 % Delaunay-triangulering, punktsett, sirkelkriterie, distmesh (ikke 3D), etc.
-This project is a continuation on previous work by \textcite{UPR_thesis}, and most of the theory in this section is, unless otherwise stated, based on \textcite{UPR_thesis} or \textcite{UPR_chapter}.
+This project is a continuation on previous work by \textcite{UPR_thesis}, and most of the theory in this section is, unless otherwise stated, is based on \textcite{UPR_thesis} or \textcite{UPR_chapter}.
 
 To produce and use discrete representations of the real world, there must be a way to map the real, continuous domain to a discrete representation. This is typically done by looking at a set of points in the real domain.
-
 \begin{definition}[Point set]
 A point set $P \in \mathbb{R}^n$ is a finite set of points in $\mathbb{R}^n$.
 \end{definition}
-While there exist infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. To encode more data in the discrete representation, points in a point set can be grouped into simplices. This enables the inclusion of data about physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations. Using simplices to represent a domain enables us to reduce the amount of data necessary for representing a domain with physical features, compared to using a large point set to represent the domain.
+While there exist infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. As point sets only include the points themselves, they cannot be used to describe the room between the points. In order to handle this, another type of representation is needed. Two points can be connected by a line segment, which describes the room between the two points in one dimension. To describe the room between three or more points in two dimensions, we need some kind of \emph{tesselation}.
+
+\begin{definition}[Tesselation]
+A tesselation is a way to cover a two-dimensional plane with a repeating pattern of geometrical figures, with no gap or overlaps.
+\end{definition}
+The simplest geometrical figure that can be used in a two-dimensional tesselation is the triangle, i.e., a polygon with three edges and three vertices. We can extend the idea of a triangle as the simplest figure that can be used in a tesselation, into \emph{simplices}.
 
 
 \begin{definition}[Simplex]
 A simplex is a generalization of a triangle to arbitrary dimensions.
 \end{definition}
-Simplices represent the simplest possible geometric object in a space. As discrete representations of objects in physical space are limited to at most three spatial dimensions, we only need to consider the first four simplices (Figure~\ref{fig:simplices}):
+Simplices represent the simplest possible geometric object in a space. Using simplices enables the inclusion of data about our domain that is not directly represented in the points. In geological modelling, this primarily includes physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations.
+
+As discrete representations of objects in physical space are limited to at most three spatial dimensions, we only need to consider the first four simplices (Figure~\ref{fig:simplices}):
 \begin{itemize}
     \item A 0-simplex is a point.
     \item A 1-simplex is a line.
@@ -69,7 +75,7 @@ The convex hull of a point set $P$ is the minimal convex set containing $P$.
     \label{fig:ex:convex_hull}
 \end{figure}
 
-The process of converting a point set into a set of simplices is called \emph{triangulation}.
+The result of converting a point set into a set of simplices is called a \emph{triangulation}.
 
 \begin{definition}[Triangulation]
 A triangulation $T$ of a point set $P$ is the set of simplices $T$ such that:
@@ -162,6 +168,25 @@ Delaunay triangulations are unique as long as at most three vertices are on the 
     \label{fig:non-unique-delaunay}
 \end{figure}
 
+Several algorithms exist for generating Delaunay triangulations. The simplest of these is a flip algorithm. This algorithm is based on the flipping technique: Observe any two triangles $ABC$ and $BCD$ that share a common side $BC$, where the triangles do not meet the Delaunay condition. These triangles can be converted to two triangles that do meet the Delaunay condition by flipping them -- swapping the common side $BC$ for a new common side $AD$, thus creating new triangles $ABD$ and $ACD$. An example of this technique is shown in \autoref{fig:Delaunay-flipping}. The algorithm is simple once this technique is known: To create a Delanunay triangulation, start with any triangulation $T$, then flip edges of any non-conforming triangles until every triangle meet the Delaunay condition.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/delaunay-flipping/delaunay_flipping_initial.png}
+        \caption{Initial triangulation.}
+        \label{fig:delaunay-flipping-initial}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/delaunay-flipping/delaunay_flipping_delaunay.png}
+        \caption{After flipping.}
+        \label{fig:delaunay-flipping-after}
+    \end{subfigure}
+    \caption[Illustration of flipping a common side to create Delaunay triangulations]{Illustration of flipping a common side to create Delaunay triangulations. We start with an initial triangulation $ABC$ and $BCD$ in (\subref{fig:delaunay-flipping-initial}). These do meet the Delaunay condition, as shown from the gray circles. We therefore flip the common side and get the new triangulation $ABD$ and $ACD$ shown in (\subref{fig:delaunay-flipping-after}).}
+    \label{fig:Delaunay-flipping}
+\end{figure}
 
 
 \subsection{Voronoi diagrams}
@@ -169,11 +194,11 @@ A \emph{Voronoi diagram} is a form of gridding formally introduced by \textcite{
 
 \begin{definition}[Voronoi diagram]
 \label{def:voronoi}
-Let $P$ be a point set in $\mathbb{R}^n$ consisting of points $p_i \in P$ for $i = 1,\dots,m$. Each point $p_i$ is called a \emph{site}. A point $x \in \mathbb{R}^n$ belongs to the \emph{Voronoi cell} $v_i$ associated with point $p_i$ if the distance between $p_i$ and $x$ is equal to the minimum distance from $x$ to any point $p \in P$. Formally, we can define this as
+Let $P$ be a point set in $\mathbb{R}^n$ consisting of points $p_i \in P$ for $i = 1,\dots,m$. Each point $p_i$ is called a \emph{site}. A point $x \in \mathbb{R}^n$ belongs to the \emph{Voronoi cell} $v_i$ associated with site $p_i$ if the distance between $p_i$ and $x$ is equal to the minimum distance from $x$ to any site $p \in P$. Formally, we can define this as
 \begin{equation}
     v_i = \left\{ x : x \in \mathbb{R}^n \text{ s.t. } \abs{x - p_i} \leq \abs{x - p}\quad \forall p \in P \right\}.
 \end{equation}
-The set of all Voronoi cells $v_i$ is called a \emph{Voronoi diagram} or \emph{grid}.
+The set of all Voronoi cells $v_i$ is called a \emph{Voronoi diagram} or \emph{Voronoi grid}.
 \end{definition}
 
 \begin{figure}[ht]
@@ -194,13 +219,13 @@ The set of all Voronoi cells $v_i$ is called a \emph{Voronoi diagram} or \emph{g
     \label{fig:ex:only-voronoi}
 \end{figure}
 
-The intersection between two Voronoi cells $v_i$ and $v_j$ is called a face, and is denoted by $v_{i,j}$ \cite{UPR_chapter}. The face is made up of all points $x \in \mathbb{R}^n$ that are the same distance from $p_i$ and $p_j$, and where this distance is the same as the minimum distance from $x$ to any $p \in P$. We can define this formally as
+The intersection between two Voronoi cells $v_i$ and $v_j$ is called a face, and is denoted by $v_{i,j}$. The face is made up of all points $x \in \mathbb{R}^n$ that are the same distance from $p_i$ and $p_j$, and where this distance is the same as the minimum distance from $x$ to any $p \in P$. We can define this formally as
 \begin{equation}
 \label{eq:voronoi-face}
     v_{i, j} = \left\{ x : x \in \mathbb{R}^d \text{ s.t. } \abs{x - p_i} = \abs{x - p_j} \leq \abs{x - p}\quad \forall p \in P \right\}.
 \end{equation}
 
-We can, in general, say that a $k$-face of a Voronoi diagram is the $k$-dimensional intersection between Voronoi cells \cite{UPR_chapter}. We can define this formally as
+We can, in general, say that a $k$-face of a Voronoi diagram is the $k$-dimensional intersection between Voronoi cells. We can define this formally as
 \begin{equation}
 \label{eq:voronoi-k-faces}
     v_{i,\dots, j} = \left\{ x : x \in \mathbb{R}^d \text{ s.t. } \abs{x - p_i} = \dots = \abs{x - p_j} \leq \abs{x - p}\quad \forall p \in P \right\}.
@@ -208,27 +233,13 @@ We can, in general, say that a $k$-face of a Voronoi diagram is the $k$-dimensio
 
 When dealing with a two-dimensional domain, i.e., $P \in \mathbb{R}^2$, there are 1-dimensional faces as edges where two cells meet and 0-dimensional faces as vertices where two or more edges intersect. In \autoref{fig:ex:only-voronoi}, the 1-dimensional faces are marked by lines, and the 0-dimensional faces are marked by black dots. When $P \in \mathbb{R}^3$, we have 2-dimensional faces as planes where two 3-dimensional cells meet, 1-dimensional faces as edges where two planes intersect, and 0-dimensional faces as vertices where two or more edges intersect.
 
-From \autoref{eq:voronoi-k-faces}, it follows that 0-dimensional faces, i.e., Voronoi vertices, are points where the distance to three Voronoi sites are equal and smaller than the distance to any other sites. We formalize this is \autoref{theorem:voronoi-vertex}.
+For two-dimensional domains, it follows from \autoref{eq:voronoi-k-faces}, that 0-dimensional faces, i.e., Voronoi vertices, are points where the distance to three Voronoi sites are equal and smaller than the distance to any other sites. In other words, sites $p_i$, $p_j$ and $p_k \in P$ create a vertex $v_{i, j, k}$ when the open circle intersecting all sites is empty of any sites in $P$. The vertex is placed in the center of the open circle.
 
-\begin{theorem}
-\label{theorem:voronoi-vertex}
-Sites $p_i$, $p_j$ and $p_k \in P$ create a vertex $v_{i, j, k}$ if and only if the open circle intersecting all sites is empty of any sites in $P$. 
-\end{theorem}
-\begin{proof}
-Let $C$ be the open circle intersecting $p_i$, $p_j$ and $p_k$, with radius $r$. Assume there is a site $p \in C$. Let $x$ be the center of $C$, i.e. the point where $\abs{x - p_i} = \abs{x - p_j} = \abs{x - p_k} = r$. As $p \in C$ and $C$ is an open circle, we have
-\begin{equation*}
-    \abs{x - p} < r = \abs{x - p_i} = \abs{x - p_j} = \abs{x - p_k}.
-\end{equation*}
-As $p \in P$, \autoref{eq:voronoi-k-faces} leads to $v_{i, j, k} = \emptyset$.
-\end{proof}
 The same holds true in $\mathbb{R}^3$, where four sites have a 0-dimensional face (vertex) if and only if the open ball intersecting all four sites is empty of any sites in $P$.
 
 \subsubsection{Relationship between Delaunay and Voronoi}
-\autoref{theorem:voronoi-vertex} appears to be very similar to the definition of Delaunay triangulation in Definition \ref{def:delaunay}. In fact, Delaunay triangulations and Voronoi grids are considered \emph{dualities} \cite{UPR_chapter}.
+This appears to be very similar to the definition of Delaunay triangulation in Definition~\ref{def:delaunay}. In fact, Delaunay triangulations and Voronoi grids are considered dualities.
 
-% \begin{definition}[Dualities]
-% Dualities are two objects that have a one-to-one relationship, and can be translated back and forth.
-% \end{definition}
 
 Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the same point set. Then each node in $T$ is associated with a cell in $V$, and vice versa. More specifically, the centers of the circumcircles used to prove $T$ is Delaunay are vertices in the Voronoi diagram, and if there is an edge in $T$ between two sites, then the sites share a face in $V$. Likewise, the sites in the Voronoi diagram are vertices in the Delaunay triangulation. This is illustrated in \autoref{fig:ex:voronoi}: sites are marked by blue dots and the circumcenters of the Delaunay triangulation are marked by red dots.\looseness=-1
 
@@ -252,7 +263,7 @@ Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the sa
 \end{figure}
 
 \subsubsection{Clipped Voronoi diagrams}
-One important, but in our case unwanted, property of Voronoi diagrams is that they extend to infinity. This is visible in both \autoref{fig:ex:only-voronoi} and \autoref{fig:ex:voronoi}. As we are interested in mapping real-world objects to discrete domains that can be used for simulations, infinite domains are unwanted. To handle this, we can limit the definition of Voronoi diagrams slightly, by creating \emph{clipped Voronoi diagrams}.
+One important, but in our case unwanted, property of Voronoi diagrams is that they extend to infinity. This is visible in both \autoref{fig:ex:only-voronoi} and \autoref{fig:ex:voronoi}. As we are interested in mapping real-world objects to discrete domains that can be used for simulations, we need a way to fit the domain of our model to the boundary of the physical domain we are modelling. To handle this, we can limit the definition of Voronoi diagrams slightly, by creating \emph{clipped Voronoi diagrams}.
 
 \begin{definition}[Clipped Voronoi diagram]
 Let $P$ be a point set in a bounded domain $\mathcal{D} \subset \mathbb{R}^n$. We define a clipped Voronoi diagram as the set of all cells $v_i$, where
@@ -262,11 +273,11 @@ Let $P$ be a point set in a bounded domain $\mathcal{D} \subset \mathbb{R}^n$. W
 \end{equation}
 \end{definition}
 
-While there is little difference between clipped and unclipped Voronoi diagrams, limiting the domain is beneficial for simulations and computer representation.
+While there is little difference between clipped and unclipped Voronoi diagrams, limiting the domain is beneficial for simulations and computer representation. While clipping a Voronoi diagram means the border cells are no longer strictly Voronoi, this has little impact on the overall representation of the domain.
 
 \subsubsection{Centroidal Voronoi diagrams}
 \label{sec:CVD}
-The properties of a Voronoi diagram depend on the distribution of its sites. One especially interesting case happens when the sites and centers of each cell align. We use the mass center of the Voronoi cells to calculate this. The mass center of a Voronoi cell is given as
+The properties of a Voronoi diagram depend on the distribution of its sites. One especially interesting case happens when the sites and centers of each cell align. We use the mass center of the Voronoi cells to calculate the center of each cell. The mass center of a Voronoi cell is given as
 \begin{equation}
     \mathbf{c}_i = \frac
         {\int_{V_i} \mathbf{y} \rho(\mathbf{y}) d\mathbf{y}}
@@ -325,7 +336,7 @@ Another method for generating nice Voronoi diagrams is by exploiting the duality
     \end{cases}
 \end{equation}
 
-The total force on a point, $F(p_i)$, is simply the sum of the force from all springs connected to $p_i$. We have two special types of points to consider. Points along the border must avoid getting pushed out of the domain. To do so, we add an external force perpendicular to the border pointing inwards, balancing the internal forces. We can also have fixed joints. These are simply not allowed to move, no matter the applied force. The optimization loop, then, is simple:
+The total force on a point, $F(p_i)$, is simply the sum of the force from all springs connected to $p_i$. We have two special types of points to consider. Points along the border must avoid getting pushed out of the domain. To do so, we add an external force perpendicular to the border pointing inwards, balancing the internal forces. We can also have fixed joints. These are not allowed to move, no matter the applied force. The optimization loop, then, is simple:
 
 \begin{pseudocode}[label=alg:delaunay_force]{Optimal Delaunay triangulation}
     Make an initial set of sites
@@ -338,8 +349,34 @@ The total force on a point, $F(p_i)$, is simply the sum of the force from all sp
             Move vertex a set step length along the sum of forces
 \end{pseudocode}
 
+This method is the primary method for generating background sites in UPR, and is further discussed in \autoref{sec:UPR}. An example of applying the optimal Delaunay triangulation algorithm on a point set is shown in \autoref{fig:optimal-delaunay}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/optimal-delaunay/demo_distmesh_before.png}
+        \caption{Before ODT}
+        \label{fig:ODT-before}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/optimal-delaunay/demo_distmesh_after.png}
+        \caption{Uniform $h$}
+        \label{fig:ODT-after}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/optimal-delaunay/demo_distmesh_fancy.png}
+        \caption{Non-uniform $h$}
+        \label{fig:ODT-fancy}
+    \end{subfigure}
+    \caption[Example of applying the optimal Delaunay algorithm on a point set]{Example of applying the optimal Delaunay algorithm on a point set. The initial point set is shown in (\subref{fig:ODT-before}). The result of applying the optimal Delaunay algorithm with a uniform element size function is shown in (\subref{fig:ODT-after}). The result of applying the optimal Delaunay algorithm with a non-uniform element size function is shown in (\subref{fig:ODT-fancy}). The red points are fixed.}
+    \label{fig:optimal-delaunay}
+\end{figure}
+
 \subsection{PEBI grids}
-Several meshing-related sources, including \cite{UPR_chapter} and \cite{UPR_thesis}, operate with what they call \emph{PEBI grids} -- PErpendicular BIsector grids. \textcite{UPR_thesis} operates with the following definition:
+Within reservoir modelling, the term PEBI grids -- PErpendicular BIsector grids -- is often used instead of Voronoi grids. \textcite{UPR_thesis} operates with the following definition:
 
 \begin{definition}[PEBI grid]
 \label{def:PEBI-grid}
@@ -363,19 +400,9 @@ This process is visualized in \autoref{fig:PEBI-definition}, in which $p_i$ is t
     \label{fig:PEBI-definition}
 \end{figure}
 
-Looking at the cell marked in \autoref{fig:PEBI-definition}, it appears to resemble the central Voronoi cell in \autoref{fig:ex:voronoi-voronoi}. In fact, \textcite{UPR_chapter} present proof that PEBI grids are Voronoi diagrams, which we repeat here for completeness.
+It is relatively easy to show that PEBI grids and Voronoi grids are the same. Let $P$ be a finite point set in a domain $\mathcal{D}$, with $\mathcal{B}$ as a PEBI grid of $P$, and consider a randomly selected point $x \in \mathcal{D}$. Assume that $x$ belongs to PEBI cell $b_i$. This means it is part of all subspaces $H(p_i, p_j)$, and thus must be at least as close to $p_i$ as any other $p_j \in P$. As this holds for all $j$, it follows from \autoref{eq:clipped-voronoi} that $x \in v_i$.
 
-\begin{theorem}
-\label{theorem:PEBI-voronoi}
-Let $P$ be a finite point set, $P \in \mathcal{D}$. Let $\mathcal{B}$ be a PEBI grid of $P$. Then $\mathcal{B}$ is a Voronoi diagram of $P$.
-\end{theorem}
-\begin{proof}
-First look at a randomly selected point $x \in \mathcal{D}$. As every point in $\mathcal{D}$ belongs to at least one Voronoi cell, assume $x$ belongs to cell $v_i$ in the Voronoi diagram of $P$. We know from  \autoref{eq:clipped-voronoi} that $x$ is at least as close to $v_i$ as any other $v_j$. This means that $x$ will be in the subspace $H(p_i, p_j)$ for all $j$, meaning it must be in the intersection of all $H(p_i, p_j)$. It thus follows from Definition \ref{def:PEBI-grid} that $x \in b_i$.
-
-Now, assume that $x$ belongs to PEBI cell $b_i$. This means it is part of all subspaces $H(p_i, p_j)$, and thus must be at least as close to $p_i$ as any other $p_j \in P$. As this holds for all $j$, it follows from \autoref{eq:clipped-voronoi} that $x \in v_i$.
-
-We thus have $x \in v_i \iff x \in b_i$, thus $v_i = b_i$ and PEBI grids are Voronoi diagrams. The proof also holds for unclipped Voronoi diagrams.
-\end{proof}
+Now consider the Voronoi grid of $P$. As every point in $\mathcal{D}$ belongs to at least one Voronoi cell, assume a randomly selected point $x \in \mathcal{D}$ belongs to cell $v_i$ in the Voronoi diagram of $P$. We know from  \autoref{eq:clipped-voronoi} that $x$ is at least as close to $v_i$ as any other $v_j$. This means that $x$ will be in the subspace $H(p_i, p_j)$ for all $j$, meaning it must be in the intersection of all $H(p_i, p_j)$. It thus follows from Definition \ref{def:PEBI-grid} that $x \in b_i$.
 
 As PEBI is widely used in the literature, as well as in the software used for this thesis, I will use the term PEBI grids, rather than Voronoi diagrams, going forward.
 
