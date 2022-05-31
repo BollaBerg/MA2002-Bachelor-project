@@ -241,3 +241,11 @@
 \newtheorem{definition}{Definition}[section]
 
 \newtheorem{theorem}{Theorem}
+
+% Write bibliography as Last, First name
+\DeclareNameAlias{author}{family-given}
+\DeclareNameAlias{editor}{family-given}
+\DeclareNameAlias{translator}{family-given}
+
+% Separate authors with ";" instead of ","
+% \DeclareDelimFormat[bib]{multinamedelim}{\addsemicolon\space}
