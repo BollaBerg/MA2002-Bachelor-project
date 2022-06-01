@@ -4,7 +4,7 @@ As MRST and Gmsh both have their limitations, adopting Gmsh into an MRST workflo
 
 \subsection{\texttt{gmshToMrst}}
 \label{sec:GmshToMRST}
-Originally developed by \textcite{gmsh_to_mrst} as a stand-alone method for loading Gmsh meshes into MRST, \verb|gmshToMrst| became part of MRST's module library with release \verb|2022a|. The module reads the mesh from an \verb|.m|-file and performs the necessary computations for converting the mesh to an MRST grid. While it does this job well, one key requirement of \verb|gmshToMrst| is that the Gmsh mesh has been computed beforehand. This requires users to manually create the Gmsh mesh, slowing down the rapid prototyping MRST is designed to perform, while forcing its users to learn an entirely new program in order to generate the grids.
+Originally developed by \textcite{gmsh_to_mrst} as a stand-alone method for loading Gmsh meshes into MRST, \verb|gmshToMrst| became part of MRST's module library with release \verb|2022a|. The module reads the mesh from an \verb|.m|-file and performs the necessary computations for converting the mesh to an MRST grid. While it does this job well, one key requirement of \verb|gmshToMrst| is that the Gmsh mesh has been computed beforehand. This requires users to manually create the Gmsh mesh, slowing down the rapid prototyping MRST is designed for, while forcing its users to learn an entirely new program in order to generate the grids.
 
 
 \subsection{\texttt{gmsh4mrst}}
@@ -13,29 +13,26 @@ To help with this, I have developed a new software module, \verb|gmsh4mrst|, to 
 
 
 \subsubsection{Installation of \texttt{gmsh4mrst}}
-In order to integrate the two systems, \verb|gmsh4mrst| is split in two parts, one written in Python and one in MATLAB. The Python package is hosted on PyPi \cite{gmsh4mrst}, and can easily be installed from there. The MATLAB package must be manually downloaded, and the files must be added to the MATLAB path.
+In order to integrate the two systems, \verb|gmsh4mrst| is split in two parts, one written in Python and one in MATLAB. The Python package is hosted on PyPi \cite{gmsh4mrst}, and can easily be installed from there. The MATLAB package must be manually downloaded from Github \cite{gmsh4mrst-github}, and the files must be added to the MATLAB path.
 
 The Python package works as a stand-alone package. The MATLAB package, however, uses Python to create base meshes, and therefore requires that the Python package is installed to run. MATLAB must be run from an environment with the Python package installed, whether that is through a virtual environment or the base Python installation on the computer.
 
-
 \subsubsection{Features of \texttt{gmsh4mrst}}
-The primary target of \verb|gmsh4mrst| is to automate Gmsh mesh creation for use in MRST grids, while maintaining the flexibility needed for optimal grid creation. Care has been taken to ensure \verb|gmsh4mrst| is as robust as possible, especially when it comes to connecting MATLAB and Python.
+The primary target of \verb|gmsh4mrst| is to automate Gmsh mesh creation for use in MRST grids, while maintaining the flexibility needed for optimal grid creation. Care has been taken to ensure \verb|gmsh4mrst| is as robust as possible, especially when it comes to connecting MATLAB and Python. The module is designed to easily handle complex, non-convex domains, and to precisely and quickly adapt the grid to all given face- and cell constraints.
 
 One key feature of \verb|gmsh4mrst| is its many user-settable arguments and parameters. By leaving most grid-refinement decisions available to the user, \verb|gmsh4mrst| can be used for almost every grid creation necessary, while reasonable defaults ensure the module can be used for simple grids without much time spent on refinement. An overview of the available arguments is given in Appendix~\ref{app:gmsh4mrst-arguments}.
-
-The module easily handles complex, non-convex domains, and the goal of the module is to precisely and quickly adapt the grid to all given face- and cell constraints. An example of the output from the module can be seen in \autoref{fig:gmsh4mrst-pymethods} and \autoref{fig:gmsh4mrst-MATLABmethods}.
 
 \subsubsection{Using \texttt{gmsh4mrst} in Python}
 The Python part of \verb|gmsh4mrst| is where most of the grid generation is done. While the actual implementation and specifications may change over time, the Python package currently implements three methods.
 
 \paragraph{\texttt{background\_grid\_2D}:}
-The most basic of the implemented methods, \verb|background_grid_2D| uses Gmsh to create a simple background triangulation without any embedded points or lines, but with refinement around face- and cell constraints. This results in a uniform mesh, and can be used as a straight replacement of the Distmesh algorithm. The user has detailed control of the mesh, including any refinement done along the constraints.
+As arguably the most basic of the implemented methods, \verb|background_grid_2D| uses Gmsh to create a simple background triangulation without any embedded points or lines, but with refinement around face- and cell constraints. This results in a uniform mesh, and can be used as a straight replacement of the Distmesh algorithm. The user has detailed control of the mesh, including any refinement done along the constraints. An example of a grid produced using \verb|background_grid_2D| is shown in \autoref{fig:background_grid_2D}.
 
 \paragraph{\texttt{delaunay\_grid\_2D}:}
-Going one step further, \verb|delaunay_grid_2D| creates a background triangulation, but include the constraints in the generated mesh. Face constraints are embedded directly as lines or points, ensuring that the faces of the resulting Delaunay triangulation align with the constraints. Each cell constraint is wrapped in a transfinite mesh, ensuring the constraints are traced with cells in the triangulation. As a result of using transfinite meshes, \verb|delaunay_grid_2D| fails if any cell constraints intersect either each other or any face constraints.
+Going one step further, \verb|delaunay_grid_2D| creates a background triangulation, but include the constraints in the generated mesh. Face constraints are embedded directly as lines or points, ensuring that the faces of the resulting Delaunay triangulation align with the constraints. Each cell constraint is wrapped in a transfinite mesh, ensuring the constraints are traced with cells in the triangulation. As a result of using transfinite meshes, \verb|delaunay_grid_2D| fails if any cell constraints intersect either each other or any face constraints. An example of a grid produced using \verb|delaunay_grid_2D| is shown in \autoref{fig:delaunay_grid_2D}.
 
 \paragraph{\texttt{pebi\_base\_2D}:}
-The most complex of the implemented methods, \verb|pebi_base_2D| creates a background triangulation, but include both face- and cell constraints as transfinite meshes. The idea behind this is that it ensures a distribution of Delaunay vertices -- and by extension PEBI sites after converting the triangulation -- around the constraints, ensuring face constraints are traced by PEBI faces and cell constraints by PEBI sites. As a result of using transfinite meshes, \verb|pebi_base_2D| fails if any constraints intersect.
+The most complex of the implemented methods, \verb|pebi_base_2D| creates a background triangulation, but include both face- and cell constraints as transfinite meshes. The idea behind this is that it ensures a distribution of Delaunay vertices -- and by extension PEBI sites after converting the triangulation -- around the constraints, ensuring face constraints are traced by PEBI faces and cell constraints by PEBI sites. As a result of using transfinite meshes, \verb|pebi_base_2D| fails if any constraints intersect. An example of a grid produced using \verb|pebi_base_2D| is shown in \autoref{fig:pebi_base_2D}.
 
 All methods implemented in the Python package output Delaunay triangulations. The difference in outputs of the methods is shown in \autoref{fig:gmsh4mrst-pymethods}, where the left sides of the grids contain face constraints, and the right sides contain cell constraints.
 
@@ -67,13 +64,13 @@ All methods implemented in the Python package output Delaunay triangulations. Th
 The MATLAB part of \verb|gmsh4mrst| contains all code for converting the Gmsh meshes to MRST grids, as well as some code for creating PEBI sites. While the actual implementation and specifications may change over time, the MATLAB package currently implements three methods. 
 
 \paragraph{\texttt{pebiGrid2DGmsh}:}
-Designed to be a semi-direct replacement of MRST's \verb|pebiGrid2D|, \verb|pebiGrid2DGmsh| uses \verb|background_grid_2D| to create a background grid, then creates well and fracture sites in MATLAB. This gives it the same flexibility and robustness as \verb|pebiGrid2D|, while avoiding the slow site distribution of Distmesh. The method works nicely for face constraints, but struggles somewhat with aligning cell constraints accurately.
+Designed to be a semi-direct replacement of MRST's \verb|pebiGrid2D|, \verb|pebiGrid2DGmsh| uses \verb|background_grid_2D| to create a background grid, then creates well and fracture sites in MATLAB. This gives it the same flexibility and robustness as \verb|pebiGrid2D|, while avoiding the slow site distribution of Distmesh. An example of a grid produced using \verb|pebiGrid2DGmsh| is shown in \autoref{fig:pebiGrid2DGmsh}.
 
 \paragraph{\texttt{delaunayGrid2DGmsh}:}
-The most direct of the MATLAB methods, \verb|delaunayGrid2DGmsh| uses \verb|delaunay_grid_2D| to create a Delaunay triangulation capturing the supplied constraints, then converts it to an MRST grid directly. As no conversion is done, this leaves the output grid as a Delaunay triangulation, but it avoids the extra work of converting without losing constraint information. Due to using \verb|delaunay_grid_2D|, no cell constraints may intersect.
+As a simple function wrapper, \verb|delaunayGrid2DGmsh| uses \verb|delaunay_grid_2D| to create a Delaunay triangulation capturing the supplied constraints, then converts it to an MRST data type without converting it to a PEBI grid. As no conversion is done, this leaves the output grid as a Delaunay triangulation, but it avoids the extra work of converting without losing constraint information. Due to using \verb|delaunay_grid_2D|, no cell constraints may intersect. An example of a grid produced using \verb|delaunayGrid2DGmsh| is shown in \autoref{fig:delaunayGrid2DGmsh}.
 
 \paragraph{\texttt{pebiGrid2DGmshBase}:}
-A somewhat experimental method, \verb|pebiGrid2DGmshBase| uses \verb|pebi_base_2D| to create a triangulation with constraints embedded as transfinite meshes. The user can then choose whether to convert the triangulation to a PEBI grid or not. This results in a relatively flexible method, but due to using \verb|pebi_base_2D|, no constraints may intersect.
+A somewhat experimental method, \verb|pebiGrid2DGmshBase| uses \verb|pebi_base_2D| to create a triangulation with constraints embedded as transfinite meshes. The user can then choose whether to convert the triangulation to a PEBI grid or not. This results in a relatively flexible method, but due to using \verb|pebi_base_2D|, no constraints may intersect. An example of a grid produced using \verb|pebiGrid2DGmshBase| is shown in \autoref{fig:pebiGrid2DGmshBase} and \autoref{fig:pebiGrid2DGmshBase_PEBI}.
 
 All the MATLAB methods gives the user complete control of all parameters of the underlying Python grid creation, with \verb|pebiGrid2DGmsh| additionally letting the user control the fault- and well site creation done in MATLAB. The difference in outputs of the methods is shown in \autoref{fig:gmsh4mrst-MATLABmethods}, where the left sides of the grids contain face constraints, and the right sides contain cell constraints.
 
@@ -255,12 +252,41 @@ One key design goal of \verb|gmsh4mrst| was to create a drop-in replacement of D
 
 The final limitation worth mentioning is a distinct lack of feedback to the user, especially if something crashes. While basic argument parsing is done, any other errors are unhandled, creating confusing error messages. This is doubly true if anything goes wrong on the Python-side of things, where I have experienced everything from the connection between MATLAB and Python abruptly closing, to MATLAB crashing without any error message. This makes it hard for the user to understand what has gone wrong, and makes the program less robust.
 
-One annoyance, although not directly a limit on how \verb|gmsh4mrst| can be used, is the following error message, being printed every time the MATLAB module of \verb|gmsh4mrst| is run. The error message comes from the use of \verb|gmshToMrst| for reading the file, and is present when using the latter method directly on a Gmsh mesh as well. As such, it is not a direct effect of \verb|gmsh4mrst|.
-\begin{codeError}
-Warning: No field 'faces.neighbors' found. Adding plausible values... proceed with caution! 
-\end{codeError}
+% One annoyance, although not directly a limit on how \verb|gmsh4mrst| can be used, is the following error message, being printed every time the MATLAB module of \verb|gmsh4mrst| is run. The error message comes from the use of \verb|gmshToMrst| for reading the file, and is present when using the latter method directly on a Gmsh mesh as well. As such, it is not a direct effect of \verb|gmsh4mrst|.
+% \begin{codeError}
+% Warning: No field 'faces.neighbors' found. Adding plausible values... proceed with caution! 
+% \end{codeError}
 
 \subsubsection{Examples of \texttt{gmsh4mrst}}
-% Funky domain
-% Crossing constraints
-% One more, c'mon
+\label{sec:gmsh4mrst-examples}
+A key design choice when creating \verb|gmsh4mrst| was to have an easy-to-use interface. This section will present some examples of \verb|gmsh4mrst| programs, as well as their outputs. Source code for the examples is shown in Appendix~\ref{app:gmsh4mrst-examples}.
+
+\paragraph{Complex domains}
+When working with real-life domains, we sometimes have domains that are not perfectly rectangular. To handle this, \verb|gmsh4mrst| supports using any polygon as domain. Code~Segment~\ref{matlab:complex} shows how to create a star-shaped domain in \verb|gmsh4mrst|. The output is shown in \autoref{fig:gmsh4mrst-complex}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{report/Images/Combining software/gmsh4mrst examples/complex_domains.png}
+    \caption[PEBI grid with complex domain, generated using \texttt{gmsh4mrst}]{PEBI grid with complex domain, generated using \texttt{gmsh4mrst}. The blue line represents a fault, and the magenta line represents a well. Output from Code~Segment~\ref{matlab:complex}.}
+    \label{fig:gmsh4mrst-complex}
+\end{figure}
+
+\paragraph{Intersecting constraints}
+Real-life geological features may intersect, something \verb|gmsh4mrst| is designed to handle this with ease. Code~Segment~\ref{matlab:intersecting} shows how to create a grid with intersecting constraints. The output is shown in \autoref{fig:gmsh4mrst-intersecting}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{report/Images/Combining software/gmsh4mrst examples/intersecting_constraints.png}
+    \caption[PEBI grid with intersecting constraints, generated using \texttt{gmsh4mrst}]{PEBI grid with intersecting constraints, generated using \texttt{gmsh4mrst}. The blue lines represent faults, and the magenta line represents a well. Output from Code Segment~\ref{matlab:intersecting}.}
+    \label{fig:gmsh4mrst-intersecting}
+\end{figure}
+
+\paragraph{Grids with fine details}
+One key drawback of UPR using the \verb|distmesh| algorithm for generating sites is its slowness when creating grids with fine details. This is something \verb|gmsh4mrst| is designed to handle. Code Segment~\ref{matlab:details} shows how to create a grid spanning a square kilometer, with a 10 centimeter well passing through. The output is shown in \autoref{fig:gmsh4mrst-details}.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=0.5\textwidth]{report/Images/Combining software/gmsh4mrst examples/fine_details.png}
+    \caption[PEBI grid with fine details, generated using \texttt{gmsh4mrst}]{A PEBI grid with a domain of one square kilometer, with a 10 centimeter well passing through the domain. The magenta line represents a well. Output from Code Segment~\ref{matlab:details}.}
+    \label{fig:gmsh4mrst-details}
+\end{figure}

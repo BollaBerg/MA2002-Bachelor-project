@@ -1,24 +1,24 @@
 \section{Theory}
 \label{sec:Theory}
 % Delaunay-triangulering, punktsett, sirkelkriterie, distmesh (ikke 3D), etc.
-This project is a continuation on previous work by \textcite{UPR_thesis}, and most of the theory in this section is, unless otherwise stated, is based on \textcite{UPR_thesis} or \textcite{UPR_chapter}.
+This project is a continuation on previous work by \textcite{UPR_thesis}, and most of the theory in this section is, unless otherwise stated, based on \textcite{UPR_thesis} or \textcite{UPR_chapter}.
 
 To produce and use discrete representations of the real world, there must be a way to map the real, continuous domain to a discrete representation. This is typically done by looking at a set of points in the real domain.
 \begin{definition}[Point set]
 A point set $P \in \mathbb{R}^n$ is a finite set of points in $\mathbb{R}^n$.
 \end{definition}
-While there exist infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. As point sets only include the points themselves, they cannot be used to describe the room between the points. In order to handle this, another type of representation is needed. Two points can be connected by a line segment, which describes the room between the two points in one dimension. To describe the room between three or more points in two dimensions, we need some kind of \emph{tesselation}.
+While there exist infinite point sets, we limit ourselves to finite sets in order to have a discrete representation. As point sets only include the points themselves, they cannot be used to describe the room between the points. In order to handle this, another type of representation is needed. Two points can be connected by a line segment, which describes the room between the two points in one dimension. To describe the room between three or more points in two dimensions, we introduce the concept of \emph{tesselation}.
 
 \begin{definition}[Tesselation]
 A tesselation is a way to cover a two-dimensional plane with a repeating pattern of geometrical figures, with no gap or overlaps.
 \end{definition}
-The simplest geometrical figure that can be used in a two-dimensional tesselation is the triangle, i.e., a polygon with three edges and three vertices. We can extend the idea of a triangle as the simplest figure that can be used in a tesselation, into \emph{simplices}.
+The simplest geometrical figure that can be used in a two-dimensional tesselation is the triangle, i.e., a polygon with three edges and three vertices. We can extend the idea of a triangle into \emph{simplices}.
 
 
 \begin{definition}[Simplex]
-A simplex is a generalization of a triangle to arbitrary dimensions.
+A simplex is a generalization of a triangle to arbitrary dimensions. An $n$-dimensional simplex is the simplest geometrical figure in an $n$~dimensional space.
 \end{definition}
-Simplices represent the simplest possible geometric object in a space. Using simplices enables the inclusion of data about our domain that is not directly represented in the points. In geological modelling, this primarily includes physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations.
+Using simplices enables the inclusion of data about our domain that is not directly represented in the points. In geological modelling, this primarily includes physical properties such as subsurface faults, wells and other geological features, which are necessary for accurate simulations.
 
 As discrete representations of objects in physical space are limited to at most three spatial dimensions, we only need to consider the first four simplices (Figure~\ref{fig:simplices}):
 \begin{itemize}
@@ -233,11 +233,9 @@ We can, in general, say that a $k$-face of a Voronoi diagram is the $k$-dimensio
 
 When dealing with a two-dimensional domain, i.e., $P \in \mathbb{R}^2$, there are 1-dimensional faces as edges where two cells meet and 0-dimensional faces as vertices where two or more edges intersect. In \autoref{fig:ex:only-voronoi}, the 1-dimensional faces are marked by lines, and the 0-dimensional faces are marked by black dots. When $P \in \mathbb{R}^3$, we have 2-dimensional faces as planes where two 3-dimensional cells meet, 1-dimensional faces as edges where two planes intersect, and 0-dimensional faces as vertices where two or more edges intersect.
 
-For two-dimensional domains, it follows from \autoref{eq:voronoi-k-faces}, that 0-dimensional faces, i.e., Voronoi vertices, are points where the distance to three Voronoi sites are equal and smaller than the distance to any other sites. In other words, sites $p_i$, $p_j$ and $p_k \in P$ create a vertex $v_{i, j, k}$ when the open circle intersecting all sites is empty of any sites in $P$. The vertex is placed in the center of the open circle.
-
-The same holds true in $\mathbb{R}^3$, where four sites have a 0-dimensional face (vertex) if and only if the open ball intersecting all four sites is empty of any sites in $P$.
-
 \subsubsection{Relationship between Delaunay and Voronoi}
+For two-dimensional domains, it follows from \autoref{eq:voronoi-k-faces}, that 0-dimensional faces, i.e., Voronoi vertices, are points where the distance to three Voronoi sites are equal and smaller than the distance to any other sites. In other words, sites $p_i$, $p_j$ and $p_k \in P$ create a vertex $v_{i, j, k}$ when the open circle intersecting all sites is empty of any sites in $P$. The vertex is placed in the center of the open circle. The same holds true in $\mathbb{R}^3$, where four sites have a 0-dimensional face (vertex) if and only if the open ball intersecting all four sites is empty of any sites in $P$.
+
 This appears to be very similar to the definition of Delaunay triangulation in Definition~\ref{def:delaunay}. In fact, Delaunay triangulations and Voronoi grids are considered dualities.
 
 
@@ -263,7 +261,7 @@ Let $T$ be a Delaunay triangulation and $V$ be a Voronoi diagram, both on the sa
 \end{figure}
 
 \subsubsection{Clipped Voronoi diagrams}
-One important, but in our case unwanted, property of Voronoi diagrams is that they extend to infinity. This is visible in both \autoref{fig:ex:only-voronoi} and \autoref{fig:ex:voronoi}. As we are interested in mapping real-world objects to discrete domains that can be used for simulations, we need a way to fit the domain of our model to the boundary of the physical domain we are modelling. To handle this, we can limit the definition of Voronoi diagrams slightly, by creating \emph{clipped Voronoi diagrams}.
+One important, but in our case unwanted, property of Voronoi diagrams is that they extend to infinity. This is visible in both \autoref{fig:ex:only-voronoi} and \autoref{fig:ex:voronoi}. As we are interested in mapping real-world objects to discrete domains that can be used for simulations, we need a way to fit the domain of our model to the boundary of the physical domain we are modelling. To handle this, we can modify the definition of Voronoi diagrams slightly, introducing \emph{clipped Voronoi diagrams}.
 
 \begin{definition}[Clipped Voronoi diagram]
 Let $P$ be a point set in a bounded domain $\mathcal{D} \subset \mathbb{R}^n$. We define a clipped Voronoi diagram as the set of all cells $v_i$, where
@@ -273,20 +271,20 @@ Let $P$ be a point set in a bounded domain $\mathcal{D} \subset \mathbb{R}^n$. W
 \end{equation}
 \end{definition}
 
-While there is little difference between clipped and unclipped Voronoi diagrams, limiting the domain is beneficial for simulations and computer representation. While clipping a Voronoi diagram means the border cells are no longer strictly Voronoi, this has little impact on the overall representation of the domain.
+While there is little difference between clipped and unclipped Voronoi diagrams, limiting the domain is beneficial for simulations and computer representation. Note that clipping a Voronoi diagram means the border cells are no longer strictly Voronoi, but this tends to have little impact on the overall quality of the cells.
 
 \subsubsection{Centroidal Voronoi diagrams}
 \label{sec:CVD}
 The properties of a Voronoi diagram depend on the distribution of its sites. One especially interesting case happens when the sites and centers of each cell align. We use the mass center of the Voronoi cells to calculate the center of each cell. The mass center of a Voronoi cell is given as
 \begin{equation}
-    \mathbf{c}_i = \frac
-        {\int_{V_i} \mathbf{y} \rho(\mathbf{y}) d\mathbf{y}}
-        {\int_{V_i} \rho(\mathbf{y}) d\mathbf{y}},
+    c_i = \frac
+        {\int_{V_i} y \rho(y) dy}
+        {\int_{V_i} \rho(y) dy},
 \end{equation}
-where $V_i$ is the volume of the cell and $\rho(\mathbf{y})$ is a given mass density function of the cell. If the mass centers and sites in a Voronoi diagram line up, we have a special subset of Voronoi diagrams called a \emph{centroidal Voronoi diagram (CVD)}.
+where $V_i$ is the volume of the cell and $\rho(y)$ is a given mass density function of the cell. If the mass centers and sites in a Voronoi diagram line up, we have a special subset of Voronoi diagrams called a \emph{centroidal Voronoi diagram (CVD)}.
 
 \begin{definition}[Centroidal Voronoi diagram]
-Let $P$ be a set of sites in a Voronoi diagram $\mathcal{V}$. The diagram is a \emph{centroidal Voronoi diagram} if $\mathbf{c}_i = p_i$ for all $p_i \in P$.
+Let $P$ be a set of sites in a Voronoi diagram $\mathcal{V}$. The diagram is a \emph{centroidal Voronoi diagram} if $c_i = p_i$ for all $p_i \in P$.
 \end{definition}
 
 As a result of this alignment, centroidal Voronoi diagrams typically have highly regular and evenly sized cells, which is why they are often called \emph{optimal Voronoi diagrams} \cite{UPR_thesis}. This property is shown in \autoref{fig:CVD_comparison}.
@@ -319,7 +317,7 @@ Several methods for generating CVDs exist, and one of the simplest is by using f
         Use the centroids as new sites
 \end{pseudocode}
 
-While this method is simple and easy to implement, its linear convergence limits its usability. A quasi-Newton method is introduced by \textcite{CVDmethods}, using the CVD energy function given by
+While this method is simple and easy to implement, its linear convergence limits its usability. A quasi-Newton method was introduced by \textcite{CVDmethods}, using the CVD energy function given by
 \begin{equation}
     F(x) = \sum_{i=1}^m \int_{V_i} \rho(\mathbf{y}) \abs{\mathbf{y} - c_i}^2 d\mathbf{y},
 \end{equation}
@@ -400,9 +398,39 @@ This process is visualized in \autoref{fig:PEBI-definition}, in which $p_i$ is t
     \label{fig:PEBI-definition}
 \end{figure}
 
-It is relatively easy to show that PEBI grids and Voronoi grids are the same. Let $P$ be a finite point set in a domain $\mathcal{D}$, with $\mathcal{B}$ as a PEBI grid of $P$, and consider a randomly selected point $x \in \mathcal{D}$. Assume that $x$ belongs to PEBI cell $b_i$. This means it is part of all subspaces $H(p_i, p_j)$, and thus must be at least as close to $p_i$ as any other $p_j \in P$. As this holds for all $j$, it follows from \autoref{eq:clipped-voronoi} that $x \in v_i$.
+It is relatively easy to show that PEBI grids and Voronoi diagrams are the same. Let $P$ be a finite point set in a domain $\mathcal{D}$, with $\mathcal{B}$ as a PEBI grid of $P$, and consider a randomly selected point $x \in \mathcal{D}$. Assume that $x$ belongs to PEBI cell $b_i$. This means it is part of all subspaces $H(p_i, p_j)$, and thus must be at least as close to $p_i$ as any other $p_j \in P$. As this holds for all $j$, it follows from \autoref{eq:clipped-voronoi} that $x \in v_i$.
 
-Now consider the Voronoi grid of $P$. As every point in $\mathcal{D}$ belongs to at least one Voronoi cell, assume a randomly selected point $x \in \mathcal{D}$ belongs to cell $v_i$ in the Voronoi diagram of $P$. We know from  \autoref{eq:clipped-voronoi} that $x$ is at least as close to $v_i$ as any other $v_j$. This means that $x$ will be in the subspace $H(p_i, p_j)$ for all $j$, meaning it must be in the intersection of all $H(p_i, p_j)$. It thus follows from Definition \ref{def:PEBI-grid} that $x \in b_i$.
+Now consider the Voronoi diagram of $P$. As every point in $\mathcal{D}$ belongs to at least one Voronoi cell, assume a randomly selected point $x \in \mathcal{D}$ belongs to cell $v_i$ in the Voronoi diagram of $P$. We know from \autoref{eq:clipped-voronoi} that $x$ is at least as close to $v_i$ as any other $v_j$. This means that $x$ will be in the subspace $H(p_i, p_j)$ for all $j$, meaning it must be in the intersection of all $H(p_i, p_j)$. It thus follows from Definition \ref{def:PEBI-grid} that $x \in b_i$.
 
 As PEBI is widely used in the literature, as well as in the software used for this thesis, I will use the term PEBI grids, rather than Voronoi diagrams, going forward.
 
+\subsection{Transfinite grids}
+One way of creating structured grids is by defining a continuous function $f$ around the constraint of the grid, then interpolating the constraint function to create a function on the whole domain \cite{transfinite}. This creates a \emph{transfinite grid}.
+\begin{definition}[Transfinite grid]
+A transfinite grid is defined by interpolating a function $f$ defined around the constraint of the grid into the domain of the grid.
+\end{definition}
+The simplest form of transfinite grids are defined by a linear function $f$ around the constraint, creating a rectangular, structured grid. Three examples of transfinite grids are shown in \autoref{fig:transfinite}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/transfinite/transfinite_1.png}
+        \caption{Linear $f$}
+        \label{fig:trans1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/transfinite/transfinite_2.png}
+        \caption{Exponential $y$}
+        \label{fig:trans2}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Theory/transfinite/transfinite_3.png}
+        \caption{Exponential $x$ and $y$}
+        \label{fig:trans3}
+    \end{subfigure}
+    \caption[Examples of transfinite grids]{Examples of transfinite grids. In (\subref{fig:trans1}), $f$ is linear along both axes. In (\subref{fig:trans2}), $f$ is exponential along the $y$-axis, but linear along the $x$-axis. In (\subref{fig:trans3}), $f$ is exponential along both axes.}
+    \label{fig:transfinite}
+\end{figure}

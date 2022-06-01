@@ -4,9 +4,9 @@ As there exists a vast range of solutions for creating grids to represent real d
 
 \subsection{MRST}
 \label{sec:MRST}
-The MATLAB Reservoir Simulation Toolbox -- MRST -- is an open-source toolbox for reservoir simulation, developed by the Computational Geosciences group at SINTEF Digital. Originally aimed at the study of discretization and flow solvers, the project has since expanded and currently offers much of the same functionality that can be found in commercial reservoir simulators \cite{MRST_book}. Its main target is still research, with the primary focus being on rapidly developing and demonstrating contemporary methods and concepts \cite{MRST_website}.
+The MATLAB Reservoir Simulation Toolbox (MRST) is an open-source toolbox for reservoir simulation, developed by the Computational Geosciences group at SINTEF Digital. Originally aimed at the study of discretization and flow solvers, the project has since expanded and currently offers much of the same functionality that can be found in commercial reservoir simulators \cite{MRST_book}. Its main target is still research, with the primary focus being on rapidly developing and demonstrating contemporary methods and concepts \cite{MRST_website}.
 
-To keep its extensive set of features maintainable, MRST is organized with a set of core functionality, as well as several optional add-on modules \cite{MRST_book}. The core includes methods for handling grids, data, and basic drive mechanisms such as gravity, sources, and wells, as well as an implementation of automatic differentiation. The add-on modules includes tools for discretization, solvers for incompressible flow, simulators based on automatic differentiation, specialized computational methods aimed at solving concrete problems, several utility modules, as well as tools that can be used to aid the modeling of the reservoirs. The latter group contains the UPR module.
+To keep its extensive set of features maintainable, MRST is organized with a set of core functionality, as well as several optional add-on modules. The core includes methods for handling grids, data, and basic drive mechanisms such as gravity, sources, and wells, as well as an implementation of automatic differentiation. The add-on modules includes tools for discretization, solvers for incompressible flow, simulators based on automatic differentiation, specialized computational methods aimed at solving concrete problems, several utility modules, as well as tools that can be used to aid the modeling of the reservoirs. The latter group contains the UPR module.
 
 
 \subsubsection{The UPR Module}
@@ -17,7 +17,7 @@ The ``Unstructured PEBI-grids for Reservoirs'' (UPR) module was developed by \te
 % Show examples
 \paragraph{Well sites:}
 \label{UPR:wells}
-UPR represents wells as cell centroids and handles the base case, where the well follows a single curve, by simply placing a set of well sites along that curve. The distance between two consecutive sites is not necessarily constant along the curve, but care is taken such that the distribution satisfies the \emph{well condition} \cite[pp.42]{UPR_thesis}.
+UPR represents wells as cell centroids and handles the base case, where the well follows a single curve, by simply placing a set of well sites along that curve. The distance between two consecutive sites is not necessarily constant along the curve, but care is taken such that the distribution satisfies the \emph{well condition} \cite{UPR_thesis}.
 
 \begin{definition}[Well condition]
 Let $p_1$ and $p_2$ be two consecutive well sites. The \emph{well condition} is satisfied if there exists a circle intersecting both points $p_1$ and $p_2$ that does not contain any other sites.
@@ -28,9 +28,26 @@ It follows from Definition~\ref{def:delaunay} that the edge between two consecut
 Extra care is also taken when two wells intersect, as handling each well independently may lead to consecutive sites not connecting, or low-quality cells. To handle this, the intersecting wells are split and a well site is placed at the intersection. This well site is then shared among all intersecting at the point, i.e., all sites that now start or end at the intersection. 
 % TODO: Example plot
 
-UPR also allows protection sites around the well sites to ensure regular well shapes and control the radius for the well cells. This is done by creating a pair of protection cells for each well site. These protection cells are placed normal to the well path, one on each side of the well site, with a distance equal to the target well radius. No protection sites are used for well intersection sites.
-% TODO: Example plot
+UPR also allows protection sites around the well sites to ensure regular well shapes and control the radius for the well cells. This is done by creating a pair of protection cells for each well site. These protection cells are placed normal to the well path, one on each side of the well site, with a distance equal to the target well radius. No protection sites are used for well intersection sites. An example of this is shown in \autoref{fig:upr-protective}.
 
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Software/UPR protection/UPR_well.png}
+        \caption{Well without protection.}
+        \label{fig:upr-prot1}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{report/Images/Software/UPR protection/UPR_well_protLayer.png}
+        \caption{Well with protection.}
+        \label{fig:upr-prot2}
+    \end{subfigure}
+    \caption{Example of protective sites in UPR. The magenta lines represent wells.}
+    \label{fig:upr-protective}
+\end{figure}
 \paragraph{Fault sites:}
 \label{UPR:faults}
 Faults are represented by cell edges and are created by tracing faults with two lines of fault sites -- one on each side of the fault lines. UPR does this by creating a set of circles along each fault, then creating fault sites where these circles intersect. It starts by placing a set of points, $C = \{c_i\}$, along the fault, with a distance between points given by a density function $d_i = \rho(c_i, c_{i+1})$. To create two fault points, two consecutive circles must intersect in two places. This creates the following distance limitations:
@@ -71,7 +88,7 @@ Special care is also taken when wells and faults intersect. UPR handles this, li
 % TODO: Example plot
 
 \paragraph{Other sites:}
-UPR employs three methods for generating the remaining PEBI sites \cite{UPR_thesis}. The first and simplest method is to just distribute the sites in a Cartesian grid. After all sites have been placed, all background sites violating well and fault conditions are removed. In addition to this, each well and fault site gets a grid size, defined for well sites as the distance between two consecutive well sites, and for fault sites as the distance between two sites generated by the same two fault circles. Any background sites within the grid size of a well or fault site are also removed, creating a structured PEBI grid conforming to both wells and faults.
+UPR employs three methods for generating the remaining PEBI sites. The first and simplest method is to just distribute the sites in a Cartesian grid. After all sites have been placed, all background sites violating well and fault conditions are removed. In addition to this, each well and fault site gets a grid size, defined for well sites as the distance between two consecutive well sites, and for fault sites as the distance between two sites generated by the same two fault circles. Any background sites within the grid size of a well or fault site are also removed, creating a structured PEBI grid conforming to both wells and faults.
 % TODO: Example plot
 
 To refine structured grids, especially for cells near constraints, UPR employs a standard multilevel quad-tree local grid refinement \cite[pp.49]{UPR_thesis}. The method refines a cell by splitting it in four, connecting the opposing edges to each other. To refine a PEBI cell, the site creating the cell is replaced by four sites, one in each quadrant of the cell.
@@ -140,19 +157,12 @@ Combining these structures into a boundary representation, Gmsh is able to accur
 These fields are highly flexible, and can depend on several factors. Examples of these fields include:
 \begin{description}
     \item[Distance fields:] Distance fields are used to calculate the distance from a set of lines and points. An illustration of the output from a distance field is shown in \autoref{fig:gmsh-distance}.
-    \item[Threshold fields:] Threshold fields are used to set values depending on another variable, often the distance from a distance field. The threshold field has four parameters: minimum and maximum for both distance and size. The field outputs a stepped curve -- when the distance is lower than the minimum distance, the minimum size is returned. Between the minimum and maximum distance, the size scales linearly, and when the distance is above the maximum, the size is equal to the maximum size. An illustration of this curve is shown in \autoref{fig:threshold-field}. An illustration of the output from a threshold field is shown in \autoref{fig:gmsh-threshold}.
-    
-    \begin{figure}[ht]
-        \centering
-        \includegraphics[width=0.5\textwidth]{report/Images/Software/thresholdCurve.png}
-        \caption{Illustration of the Gmsh threshold field.}
-        \label{fig:threshold-field}
-    \end{figure}
+    \item[Threshold fields:] Threshold fields are used to set values depending on another variable, often the distance from a distance field. The threshold field has four parameters: minimum and maximum for both distance and size. The field outputs a stepped curve -- when the distance is lower than the minimum distance, the minimum size is returned. Between the minimum and maximum distance, the size scales linearly, and when the distance is above the maximum, the size is equal to the maximum size. An illustration of the output from a threshold field is shown in \autoref{fig:gmsh-threshold}. An illustration of the threshold curve is shown in \autoref{fig:threshold-field}. 
     
     \item[Minimum fields:] Minimum fields simply returns the minimum of a set of fields. It is often used to get the smallest cell size from a set of size fields.
 \end{description}
 
-\begin{figure}
+\begin{figure}[ht]
     \centering
     \begin{subfigure}[b]{0.45\textwidth}
         \centering
@@ -170,17 +180,24 @@ These fields are highly flexible, and can depend on several factors. Examples of
     \label{fig:gmsh-fields}
 \end{figure}
 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{report/Images/Software/thresholdCurve.png}
+    \caption{Illustration of the Gmsh threshold field.}
+    \label{fig:threshold-field}
+\end{figure}
+
 
 The meshing module provides several algorithm for meshing 2D domains. An overview of these, as well as a short description, is given below. All algorithms start with a Delaunay mesh containing all points of an originally created 1D mesh.
 \begin{description}
-    \item[MeshAdapt:] Splits long edges, collapses short edges and swaps edges if that creates a better geometrical configuration. MeshAdapt is the most robust algorithm for very complex curved surfaces and is ran automatically if Delaunay or Frontal-Delaunay fails \cite{Gmsh_reference}.
+    \item[MeshAdapt:] Splits long edges, collapses short edges and swaps edges if that creates a better geometrical configuration. MeshAdapt is the most robust algorithm for very complex curved surfaces and is run automatically if Delaunay or Frontal-Delaunay fails \cite{Gmsh_reference}.
     \item[Delaunay:] New points are inserted at the center of the circumcircle with the largest radius. Delaunay is the fastest for very large meshes of plane surfaces and usually handles complex mesh size fields well \cite{Gmsh_reference}.
     \item[Frontal-Delaunay:] A form of Delaunay computing both points and connections at the same time. Typically produces high element quality \cite{Gmsh_reference}.
     \item[Frontal-Delaunay for Quads:] Experimental variant of Frontal-Delaunay. Tries to create right-angle triangles that can be combined into rectangles \cite{Gmsh_reference}.
     \item[BAMG:] Experimental algorithm creating anisotropic triangles, i.e., triangles with different properties in different directions, such as triangles that are long and narrow \cite{Gmsh_reference}.
 \end{description}
 
-Examples of the meshes created by these algorithms can be seen in \autoref{fig:Gmsh-meshing-algorithms}. While Gmsh provides several different algorithms, they all produce some type of unstructured, triangle-based triangulation. To convert these into quadrilateral grids, Delaunay offers four recombination algorithms. Two of these -- Blossom and Blossom full-quad -- are based on a minimum-cost algorithm \cite{Gmsh_article}. There is very little available information about the last two: Simple and Simple full-quad.
+Examples of the meshes created by these algorithms can be seen in \autoref{fig:Gmsh-meshing-algorithms}. While Gmsh provides several different algorithms, they all produce some type of unstructured triangulation. To convert these into quadrilateral grids, Delaunay offers four recombination algorithms. Two of these -- Blossom and Blossom full-quad -- are based on a minimum-cost algorithm \cite{Gmsh_article}. There is very little available information about the last two: Simple and Simple full-quad.
 
 \begin{figure}[p]
     \centering
@@ -281,7 +298,7 @@ While a square mesh is simple to envision, the creation of one requires a bit of
 \paragraph{Adjusting the mesh size field:}
 Gmsh offers two ways to adjust the local resolution of the produced mesh. The first option, as shown in \autoref{fig:Gmsh-meshing-algorithms}, is to embed lines in the mesh, making Gmsh use the lines as faces in the mesh. The second method is to adjust the mesh size field function.
 
-An example of the latter method is shown in Code~Segment~~\ref{py:Gmshfield}, with output in \autoref{fig:py:Gmsh-field}. In the example, we use a line as basis for a threshold field that scales the mesh size based on distance from the line. We also use a point as basis for a math field that scales the mesh size based on the square of the distance from the point. We finally combine the fields by using the minimum mesh size. Note that neither the point nor the line are embedded in the mesh, meaning that there is no guarantee that the faces of the mesh align with either. The example also shows how Gmsh can connect to multiple CAD kernels; in this case using the OpenCASCADE kernel \cite{Gmsh_reference}.
+An example of the latter method is shown in Code~Segment~\ref{py:Gmshfield}, with output in \autoref{fig:py:Gmsh-field}. In the example, we use a line as basis for a threshold field that scales the mesh size based on distance from the line. We also use a point as basis for a math field that scales the mesh size based on the square of the distance from the point. We finally combine the fields by using the minimum mesh size. Note that neither the point nor the line are embedded in the mesh, meaning that there is no guarantee that the faces of the mesh align with either. The example also shows how Gmsh can connect to multiple CAD kernels; in this case using the OpenCASCADE kernel \cite{Gmsh_reference}.
 
 \begin{figure}[htp]
     \centering
@@ -291,7 +308,7 @@ An example of the latter method is shown in Code~Segment~~\ref{py:Gmshfield}, wi
 \end{figure}
 
 \paragraph{Structured meshes:}
-Structured meshes, or local patches of structured meshes, can be created by using transfinite curves and surfaces. An example of this is shown in Code~Segment~~\ref{py:Gmshtransfinite}, with output in \autoref{fig:py:Gmsh-transfinite}. In the example, two patches of transfinite meshes are created. The green mesh consists of linearly distributed transfinite nodes, while the orange consists of nodes following a geometric progression with power $1.5$. The cyan mesh is a standard unstructured mesh. To get rectangular cells, we use the recombine feature, combining the triangular grid into quadrilaterals within the transfinite meshes.
+Structured meshes, or local patches of structured meshes, can be created by using transfinite curves and surfaces. An example of this is shown in Code~Segment~~\ref{py:Gmshtransfinite}, with output in \autoref{fig:py:Gmsh-transfinite}. In the example, two patches of transfinite meshes are created. The green mesh consists of linearly distributed transfinite nodes, while the orange consists of nodes following a geometric progression with exponent $1.5$. The cyan mesh is a standard unstructured mesh. To get rectangular cells, we use the recombine feature, combining the triangular grid into quadrilaterals within the transfinite meshes.
 
 \begin{figure}[htp]
     \centering

@@ -1,0 +1,95 @@
+\subsection{\texttt{gmsh4mrst} examples}
+\label{app:gmsh4mrst-examples}
+This appendix contains the code behind the \verb|gmsh4mrst| examples listed in \autoref{sec:gmsh4mrst-examples}.
+
+\begin{matlab}[label=matlab:complex]{\texttt{gmsh4mrst}: Complex domain}
+% Set the default grid size
+resGridSize = 0.1;
+
+% Set the domain to a star-shape
+outer = 1;
+inner = 0.5;
+domain = [
+    outer*cosd(18) outer*sind(18);
+    inner*cosd(54) inner*sind(54);
+    outer*cosd(90) outer*sind(90);
+    inner*cosd(126) inner*sind(126);
+    outer*cosd(162) outer*sind(162);
+    inner*cosd(198) inner*sind(198);
+    outer*cosd(234) outer*sind(234);
+    inner*cosd(270) inner*sind(270);
+    outer*cosd(306) outer*sind(306);
+    inner*cosd(342) inner*sind(342);
+];
+
+% Create a single fault and well
+faceConstraints = {[-0.5 -0.7; 0.3 0.3]};
+cellConstraints = {[-0.3 0.3; 0.5 -0.7]};
+
+% Create the PEBI grid
+G = pebiGrid2DGmsh( ...
+    resGridSize, ...
+    domain, ...
+    'faceConstraints', faceConstraints, ...
+    'cellConstraints', cellConstraints ...
+);
+\end{matlab}
+
+\begin{matlab}[label=matlab:intersecting]{\texttt{gmsh4mrst}: Intersecting constraints}
+% Set the default grid size
+resGridSize = 0.1;
+
+% Set the domain to the unit square
+domain = [1 1];
+
+% Create intersecting constraints
+faceConstraints = {
+    [0.1 0.1; 0.9 0.9], ...
+    [0.5 0.1; 0.5 0.9], ...
+    [0.9 0.1; 0.1 0.9], ...
+};
+cellConstraints = {
+    [0.4 1; 0.7 0.8; 0.9 0.2] ...
+};
+
+% Create the PEBI grid
+G = pebiGrid2DGmsh( ...
+    resGridSize, ...
+    domain, ...
+    'faceConstraints', faceConstraints, ...
+    'cellConstraints', cellConstraints ...
+);
+\end{matlab}
+
+
+
+\begin{matlab}[label=matlab:details]{\texttt{gmsh4mrst}: Detailed grid}
+% Set the default grid size
+resGridSize = 0.1;
+
+% Set the domain to the unit square
+% We use kilometers as units
+domain = [1 1];
+
+% Set the size of cells near our well
+cellConstraintFactor = 0.1;
+
+% Set the width of the well
+cellConstraintPerpendicularFactor = 0.0001;  % 10 cm
+
+% Create a simple well passing through the domain
+cellConstraints = {
+    [0.5 0.99; 0.3 0.01] ...
+};
+
+% Create the PEBI grid
+% We can use pebiGrid2DGmshBase as we have no crossing constraints
+G = pebiGrid2DGmshBase( ...
+    resGridSize, ...
+    domain, ...
+    'cellConstraints', cellConstraints, ...
+    'cellConstraintFactor', cellConstraintFactor, ...
+    'cellConstraintPerpendicularFactor', ...
+    cellConstraintPerpendicularFactor ...
+);
+\end{matlab}
