@@ -1,0 +1,3 @@
+[submodule "code/gmsh4mrst_continued"]
+	path = code/gmsh4mrst_continued
+	url = git@github.com:BollaBerg/gmsh4mrst.git
